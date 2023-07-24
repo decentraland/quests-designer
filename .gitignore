@@ -3,3 +3,6 @@ node_modules
 temp
 tsdoc-metadata.json
 coverage
+protoc3
+src/protocol/quests.ts
+src/protocol/google

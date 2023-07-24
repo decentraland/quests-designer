@@ -1,3 +1,3 @@
-# base-ts-project
+# Quests Designer
 
-Use this project as template for TypeScript libraries
+Component to design Quest for Decentraland.

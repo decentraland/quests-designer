@@ -1,33 +1,58 @@
 {
-  "name": "@well-known-components/base-component",
-  "version": "1.0.0",
-  "description": "base component",
+  "name": "@dcl/quests-designer",
+  "version": "0.1.0",
+  "description": "Quests Designer",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
-  "scripts": {},
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "make build",
+    "test": "make test",
+    "example": "vite ./example"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/well-known-components/base-component.git"
+    "url": "https://github.com/decentraland/quests-designer"
   },
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/well-known-components/base-component/issues"
+    "url": "https://github.com/decentraland/quests-designer/issues"
   },
   "prettier": {
     "printWidth": 120,
     "semi": false
   },
-  "homepage": "https://github.com/well-known-components/base-component#readme",
+  "homepage": "",
+  "dependencies": {
+    "reactflow": "^11.7.4"
+  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.17.0",
-    "typescript": "^4.3.5",
-    "@types/jest": "^27.0.1",
-    "jest": "^27.0.6",
-    "ts-jest": "^27.0.5"
+    "@types/jest": "^28.1.0",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "jest": "^28.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "rxjs": "^7.8.1",
+    "ts-jest": "^28.0.4",
+    "ts-proto": "^1.156.1",
+    "ts-protoc-gen": "^0.15.0",
+    "typescript": "^4.7.3",
+    "vite": "^4.4.5"
   },
-  "dependencies": {},
+  "peerDependencies": {
+    "react": ">=17",
+    "react-dom": ">=17"
+  },
   "files": [
     "dist"
   ]
