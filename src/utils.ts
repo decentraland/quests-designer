@@ -66,7 +66,7 @@ export const resetState = () => {
   lastNodeId = null;
 }
 
-export const generateQuest = (nodes: Node<StepNode>[], edges: Edge<any>[]): QuestDefinition | never => {
+export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any>[]): QuestDefinition | never => {
   const questDefinition: QuestDefinition = {
     steps: [],
     connections: []

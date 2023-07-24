@@ -16,7 +16,7 @@ import "reactflow/dist/style.css";
 import Sidebar from "./Sidebar";
 import { CustomizeStep} from "./CustomizeStep";
 import { StepNode, nodeTypes } from './types'
-import { initialNodes, createNewNode, getCurrentStepNumber, getLastNodeId, subStepNumber, isValidQuest, generateQuest, DesignerContext} from './utils'
+import { initialNodes, createNewNode, getCurrentStepNumber, getLastNodeId, subStepNumber, isValidQuest, generateQuestDefinition, DesignerContext} from './utils'
 import './index.css'
 
 /**
@@ -159,7 +159,7 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
 
             currentCustomizableStep ? 
               <CustomizeStep close={() => setCurrentCustomizableStep(null)} step={currentCustomizableStep} /> 
-              : <Sidebar isValidQuest={isValidQuest(nodes, edges)} nodes={nodes} generateQuest={() => generateQuest(nodes, edges)} />
+              : <Sidebar isValidQuest={isValidQuest(nodes, edges)} nodes={nodes} generateQuest={() => generateQuestDefinition(nodes, edges)} />
           }
         </ReactFlowProvider>
       </div>
