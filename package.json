@@ -12,10 +12,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/decentraland/quests-designer"
+    "url": "git+https://github.com/decentraland/quests-designer.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Decentraland",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/decentraland/quests-designer/issues"
@@ -24,7 +24,7 @@
     "printWidth": 120,
     "semi": false
   },
-  "homepage": "",
+  "homepage": "https://github.com/decentraland/quests-designer#readme",
   "dependencies": {
     "reactflow": "^11.7.4"
   },
