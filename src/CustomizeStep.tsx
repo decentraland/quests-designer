@@ -56,7 +56,7 @@ export const CustomizeStep: React.FunctionComponent<{close: () => void, step: No
 }
 
 const AddTask = ({finish, taskNumber}: { finish: (task: StepTask<ActionType>, save: boolean) => void, taskNumber: number }) => {
-  const [task, setTask] = useState<StepTask<ActionType>>({ type: "CUSTOM", parameters: undefined, loop: 1 });
+  const [task, setTask] = useState<StepTask<ActionType>>({ type: "CUSTOM", parameters: undefined, loop: 0 });
   const [currentTypeSelected, setSelected] = useState<ActionType>("CUSTOM");
 
   return (
@@ -95,7 +95,7 @@ const AddTask = ({finish, taskNumber}: { finish: (task: StepTask<ActionType>, sa
 const CustomParamsSetter = ({paramSetter}: {paramSetter: (customId: string, loop: number) => void}) => {
   const [state, setState] = useState({  
     id:"",
-    loop: 1
+    loop: 0
   })
   return (
     <div>
@@ -115,7 +115,7 @@ const CustomParamsSetter = ({paramSetter}: {paramSetter: (customId: string, loop
 }
 
 const LocationParmsSetter = ({text, paramSetter}: {text: string, paramSetter: (x: number, y: number, loop: number) => void}) => {
-  const [loop, setLoop] = useState(1);
+  const [loop, setLoop] = useState(0);
 
   return (
     <div>
@@ -170,7 +170,7 @@ const IDAndLocationSetter = ({text, paramSetter}: {text: string, paramSetter: (i
     id:"",
     x: 0,
     y: 0,
-    loop: 1
+    loop: 0
   })
   return (
     <div>

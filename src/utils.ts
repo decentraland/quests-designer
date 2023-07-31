@@ -22,7 +22,7 @@ export const initialNodes: Node[] = [
 
 export const createActionItems = (task: StepTask<ActionType>) => {
   const actions: Action[] = []
-  let loop = task.loop === 1 ? 2 : task.loop > 0 ? task.loop+1 : 1;
+  let loop = task.loop == 0 ? 1 : task.loop + 1
   for (let i = loop; i > 0; i--) {
     actions.push({
       type: task.type,
@@ -97,7 +97,7 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
     throw new Error("Invalid Tasks")
   }
 
-  const filteredEdges = edges.filter((edge) => edge.source != "_START_" && edge.target != "_END_")
+  const filteredEdges = edges.filter((edge) => edge.id != "_START_" && edge.id != "_END_")
 
   if (!filteredEdges.length) {
     throw new Error("Missing connections between steps")
@@ -121,8 +121,8 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
 export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
   let isValid = true;
 
-  const filteredNodes = nodes.filter((node) => node.type != "_START_" && node.type != "_END_")
-  const filteredEdges = edges.filter((edge) => edge.source != "_START_" && edge.target != "_END_")
+  const filteredNodes = nodes.filter((node) => node.id != "_START_" && node.id != "_END_")
+  const filteredEdges = edges.filter((edge) => edge.source != "_START_" || edge.target != "_END_")
 
   if (!filteredNodes.length || !filteredEdges.length) return false
 
