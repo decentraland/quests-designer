@@ -1,7 +1,19 @@
 import React from 'react';
 import { Node } from 'reactflow';
 
-export default ({nodes, generateQuest, isValidQuest}: { nodes: Node[], generateQuest: () => void, isValidQuest: boolean}) => {
+export default ({
+  nodes, 
+  generateQuest, 
+  saveButtonContent, 
+  isValidQuest, 
+  closeDesigner
+}: 
+{ 
+  nodes: Node[], generateQuest: () => void, 
+  saveButtonContent: string, 
+  isValidQuest: boolean, 
+  closeDesigner?: () => void
+}) => {
   return (
     <aside>
       <div>
@@ -19,7 +31,7 @@ export default ({nodes, generateQuest, isValidQuest}: { nodes: Node[], generateQ
         }
       </div>
       <div className="dndnode input" onDragStart={(event) => {
-        event.dataTransfer.setData('application/reactflow', 'simpleStep')
+        event.dataTransfer.setData('application/reactflow', 'questStep')
         event.dataTransfer.effectAllowed = 'move'
       }} draggable>
         New Step
@@ -27,7 +39,12 @@ export default ({nodes, generateQuest, isValidQuest}: { nodes: Node[], generateQ
       <p className="description">
         You can can create a new step by dragging the above button, or by dropping the connection line on the pane on the right
       </p>
-      <button disabled={!isValidQuest} style={{ margin:"20px 0", padding: "10px"}} onClick={() => generateQuest()}>Generate Quest</button>
+      <div style={{ display: "flex", justifyContent: "space-between" , margin: "20px 0"}}>
+        <button disabled={!isValidQuest} style={{ padding: "10px", marginRight: "5px"}} onClick={() => generateQuest()}>{saveButtonContent}</button>
+        {
+          closeDesigner && <button  style={{ padding: "10px"}} onClick={() => closeDesigner()}>Close</button>
+        }
+      </div>
     </aside>
   );
 };

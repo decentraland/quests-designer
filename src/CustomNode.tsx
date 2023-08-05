@@ -53,7 +53,7 @@ export const End = memo(({
 
 End.displayName = "EndNode";
 
-export const SimpleStep = ({
+export const QuestStep = ({
   data,
   targetPosition = Position.Top,
   sourcePosition = Position.Bottom

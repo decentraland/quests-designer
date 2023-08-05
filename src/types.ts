@@ -1,4 +1,6 @@
-import { End, SimpleStep, Start } from "./CustomNode";
+import { Node as RFlowNode, Edge as RFlowEdge} from 'reactflow'
+
+import { End, QuestStep, Start } from "./CustomNode";
 
 export type StepNode = {
     label: string, 
@@ -8,9 +10,12 @@ export type StepNode = {
     description: string 
 }
 
+export type Node = RFlowNode<StepNode>
+export type Edge = RFlowEdge
+
 export type ActionType = "CUSTOM" | "LOCATION" | "EMOTE" | "JUMP" | "NPC_INTERACTION";
 
-type Params<T> = T extends "CUSTOM" ? { id: string } : 
+export type Params<T> = T extends "CUSTOM" ? { id: string } : 
   T extends "LOCATION" ? { x: number, y: number } : 
   T extends "EMOTE" ? { emote_id: string, x: number, y: number } : 
   T extends "JUMP" ? { x: number, y: number } : 
@@ -26,5 +31,5 @@ export type StepTask<T> = {
 export const nodeTypes = {
   start: Start,
   end: End,
-  simpleStep: SimpleStep
+  questStep: QuestStep
 };

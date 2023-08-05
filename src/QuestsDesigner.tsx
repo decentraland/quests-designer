@@ -16,13 +16,13 @@ import "reactflow/dist/style.css";
 import Sidebar from "./Sidebar";
 import { CustomizeStep} from "./CustomizeStep";
 import { StepNode, nodeTypes } from './types'
-import { initialNodes, createNewNode, getCurrentStepNumber, getLastNodeId, subStepNumber, isValidQuest, generateQuestDefinition, DesignerContext} from './utils'
+import { initialNodes as defaultInitialNodes, createNewNode, isValidQuest, generateQuestDefinition, DesignerContext} from './utils'
+import { QuestDefinition } from "./protocol/quests";
 import './index.css'
 
-/**
- * Props that can be given to {@link QuestsDesigner} component
- */
-/** @public */
+/** 
+ * @public 
+*/
 export type QuestsDesignerProps = {
   /**
    *  Max steps that can be connected to the Start node
@@ -35,31 +35,74 @@ export type QuestsDesignerProps = {
   /**
   * Max steps that can be connected to a one step
   */
-  maxConnnectionsPerStep?: number
+  maxConnnectionsPerStep?: number,
+  /**
+   * Modify the button to save the Quest design
+   */
+  saveDesignButton: {
+    content?: string
+    onClick: (questDefinition: QuestDefinition, nodes: Node<StepNode>[], edges: Edge[]) => void
+  }
+  /**
+   * Optional function to close the designer from the right panel
+   */
+  closeDesigner?: () => void,
+  /**
+   * Initial nodes to display on the panel
+   */
+  initialNodes?: Node<StepNode>[],
+  /**
+   * Initial edges for the initial nodes
+   */
+  initialEdges?: Edge[]
 }
 
-let currentNodeIdTriggeringAnEdge: string | null = null;
-/**
- * Component to design a Quest
- */
 /** @public */
-export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ maxConnnectionsPerStep = 3, maxStartingSteps = 2, maxEndSteps = 5 }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((els) => addEdge(params, els)),
-    [setEdges]
-  );
+export const QuestsDesigner = ({ 
+  maxConnnectionsPerStep = 3, 
+  maxStartingSteps = 2, 
+  maxEndSteps = 5, 
+  saveDesignButton, 
+  closeDesigner, 
+  initialEdges, 
+  initialNodes }: QuestsDesignerProps
+): JSX.Element => {
+  const [nodes, setNodes, onNodesChange] = useNodesState<StepNode>(initialNodes || defaultInitialNodes);
+
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges || []);
+
   const reactFlowWrapper = useRef() as RefObject<HTMLDivElement>;
 
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
 
   const [currentCustomizableStep, setCurrentCustomizableStep] = useState<Node<StepNode>| null>(null)
 
-  const onDrop = useCallback(
+  const [stepNumber, setStepNumber] = useState(1)
+  const [globalId, setGlobalId] = useState(1)
+  const [lastNodeId, setLastNodeId] = useState<string | null>(null)
+  const [currentNodeIdTriggeringAnEdge, setCurrentNodeIdTriggeringAnEdge] = useState<string | null>(null)
+
+  const getId = () => {
+    const next = `dndnode_${globalId}`
+    setGlobalId(globalId + 1)
+    setLastNodeId(next)
+    return next
+  };
+
+  const getStepNumber = () => {
+    let number = stepNumber;
+    setStepNumber(stepNumber + 1)
+    return {step: number, label: `Step ${number}`};
+  }
+
+  const onConnect = useCallback(
+    (params: Edge | Connection) => setEdges((els) => addEdge(params, els)),
+    [setEdges]
+  );
+
+  const onDrop = 
     (event: React.DragEvent) => {
       event.preventDefault();
-
       if (reactFlowWrapper && reactFlowWrapper.current) {
         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
         const type = event.dataTransfer.getData('application/reactflow');
@@ -74,15 +117,13 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
           y: event.clientY - reactFlowBounds.top,
         });
 
-        let source = getCurrentStepNumber() > 1 ? getLastNodeId() : nodes[0].id
-        const newNode = createNewNode(position)
+        let source = stepNumber > 1 ? lastNodeId : nodes[0].id
+        const newNode = createNewNode(getId(), getStepNumber(), position)
 
         setNodes((nds) => nds.concat(newNode));
         setEdges((eds) => eds.concat({ id: newNode.id, source: source as any, target: newNode.id }));
       }
-    },
-    [reactFlowInstance]
-  );
+    }
   
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -99,22 +140,31 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
           // we need to remove the wrapper bounds, in order to get the correct position
           const { top, left } = reactFlowWrapper.current!.getBoundingClientRect();
   
-          let source = currentNodeIdTriggeringAnEdge ? currentNodeIdTriggeringAnEdge : getCurrentStepNumber() > 1 ? getLastNodeId() : nodes[0].id
-          currentNodeIdTriggeringAnEdge = null
+          let source = currentNodeIdTriggeringAnEdge ? currentNodeIdTriggeringAnEdge : stepNumber > 1 ? lastNodeId : nodes[0].id
+          setCurrentNodeIdTriggeringAnEdge(null)
 
           let newStepNode: Node<StepNode>;
           if (event instanceof MouseEvent) {
-            newStepNode = createNewNode(reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }))
+            newStepNode = createNewNode(getId(), getStepNumber(), reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }))
           } else if (event instanceof TouchEvent) {
-            newStepNode = createNewNode(reactFlowInstance!.project({ x: event.touches[0].clientX - left - 75, y: event.touches[0].clientY - top }))
+            newStepNode = createNewNode(
+              getId(), 
+              getStepNumber(), 
+              reactFlowInstance!.project({ 
+                x: event.touches[0].clientX - left - 75, 
+                y: event.touches[0].clientY - top
+            }))
           }
-  
   
           setNodes((nds) => nds.concat(newStepNode));
           setEdges((eds) => eds.concat({ id: newStepNode.id, source: source as any, target: newStepNode.id }));
         }
       }
     };
+
+  const triggerGenerateQuest = () => {
+    saveDesignButton.onClick(generateQuestDefinition(nodes, edges), nodes, edges)
+  }
 
   return (
     <DesignerContext.Provider value={{ maxConnnectionsPerStep, maxEndSteps, maxStartingSteps }}>
@@ -126,9 +176,8 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
               nodes={nodes}
               edges={edges}
               onConnectStart={(_, params) => {
-                currentNodeIdTriggeringAnEdge = params.nodeId
+                setCurrentNodeIdTriggeringAnEdge(params.nodeId)
               }}
-              
               onConnectEnd={onConnectEnd}
               onConnect={onConnect}
               onNodesChange={onNodesChange}
@@ -136,7 +185,7 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
                 if (deletedNodes.some((node) => node.data.stepNumber == currentCustomizableStep?.data.stepNumber)) {
                   setCurrentCustomizableStep(null)
                 }
-                subStepNumber(deletedNodes.length)
+                setStepNumber(stepNumber - deletedNodes.length)
               }}
               onNodeClick={(_, node) => {
                 if (currentCustomizableStep && currentCustomizableStep.id == node.id) {
@@ -158,8 +207,29 @@ export const QuestsDesigner: React.FunctionComponent<QuestsDesignerProps> = ({ m
           {
 
             currentCustomizableStep ? 
-              <CustomizeStep close={() => setCurrentCustomizableStep(null)} step={currentCustomizableStep} /> 
-              : <Sidebar isValidQuest={isValidQuest(nodes, edges)} nodes={nodes} generateQuest={() => generateQuestDefinition(nodes, edges)} />
+              <CustomizeStep
+                step={currentCustomizableStep.data}
+                onSaveStep={() => { 
+                  // step == node here
+                  setNodes((nds) => 
+                    nds.map((n) => n.data.stepNumber == currentCustomizableStep.data.stepNumber ? 
+                    { ...n, data: { ...currentCustomizableStep.data } } 
+                    : n
+                  ))
+                }}
+                onChangeStep={(step) => { 
+                  setCurrentCustomizableStep({ ...currentCustomizableStep, data: { ...step } })
+                }}
+                close={() => setCurrentCustomizableStep(null)} 
+              /> 
+              : 
+              <Sidebar 
+                isValidQuest={isValidQuest(nodes, edges)} 
+                nodes={nodes} 
+                saveButtonContent={saveDesignButton.content || "Generate Quest Definition"}
+                generateQuest={() => triggerGenerateQuest()} 
+                closeDesigner={closeDesigner} 
+              />
           }
         </ReactFlowProvider>
       </div>

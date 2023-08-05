@@ -10,7 +10,7 @@ body,
   text-align: center;
 }
 
-.react-flow__node-simpleStep {
+.react-flow__node-questStep {
   padding: 10px;
   background-color: #556677;
   color: white;

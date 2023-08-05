@@ -1,61 +1,104 @@
 import React, { useState } from 'react';
-import { Node } from 'reactflow'
 import { StepTask, ActionType, StepNode  } from './types'
 
-export const CustomizeStep: React.FunctionComponent<{close: () => void, step: Node<StepNode>}> = ({ step, close }) => {
-  const [tasks, setTasks] = useState<StepTask<ActionType>[]>([]);
+export const CustomizeStep: React.FunctionComponent<{
+  step: StepNode, 
+  close: () => void, 
+  onSaveStep: () => void,
+  onChangeStep: (step:StepNode) => void 
+}> = 
+({ step, close, onSaveStep, onChangeStep }) => {
   const [addTask, setAddTask] = useState(false)
-  const [newName, setNewName] = useState(step.data.label)
-  const [description, setDescription] = useState(step.data.description)
-
-  const finish = (task: StepTask<ActionType>, save: boolean) => {
-    if (save) {
-      setTasks((tasks) => {
-        const newTasks = [...tasks, task];
-        step.data.tasks =  newTasks
-        return newTasks
-      })
-    }
-    setAddTask(false)
-  }
 
   return (
     <aside>
       <button onClick={() => close()}>Close</button>
-      <h1 className="description">Add Step {step.data.stepNumber} info</h1>
+      <h1 className="description">Set up Step {step.stepNumber}</h1>
       <div style={{ margin: "10px 0" }}>
-        <p>Change Step's name</p>
-        <input type="text" value={newName} onChange={(event) => setNewName(event.target.value)} />
+        <p style={{ fontWeight: "bold" }}> Change Step's name</p>
+        <input 
+          type="text" 
+          value={step.label} 
+          onChange={(event) => 
+            onChangeStep({
+              ...step, 
+              label: event.target.value 
+            })} 
+        />
       </div>
       <div style={{ margin: "10px 0" }}>
-        <p>Step's description</p>
-        <textarea style={{ width: "155px" }} value={description} onChange={(event) => setDescription(event.target.value)} />
+        <p style={{ fontWeight: "bold" }}>Step's description</p>
+        <textarea 
+          style={{ width: "155px" }} 
+          value={step.description} 
+          onChange={(event) => 
+            onChangeStep({
+                ...step, 
+                description: event.target.value 
+            })
+          } 
+        />
       </div>
       {
-        tasks.length ? <ol>{ tasks.map((task) => (<li>{task.type} - {JSON.stringify(task.parameters)}</li>)) }</ol> : null
+        step.tasks.length ? 
+        <div>
+          <p style={{ fontWeight: "bold" }}>Tasks</p>
+          <ul style={{ listStyle: "none", padding: "0" }}>
+            { 
+              step.tasks.map((task, i) => (
+                <li key={`${task.type}-${i}`} >
+                  - {task.type} - {JSON.stringify(task.parameters)} 
+                  <span 
+                    style={{ color: "red", marginLeft: "5px", cursor: "pointer" }} 
+                    onClick={() => {
+                      onChangeStep({ ...step, tasks: step.tasks.filter((_, index) => index != i) })
+                    }}
+                    >
+                      &#x2715;
+                  </span>
+                </li>
+              )) 
+            }
+          </ul> 
+        </div>
+        : null
       }
       {
         !addTask && <button onClick={() => setAddTask(true)}>Add Task</button>
       }
       {
         addTask &&
-        <AddTask taskNumber={tasks.length +1} finish={finish} />
+        <AddTask 
+          taskNumber={step.tasks.length +1} 
+          onAddTask={(task) => {
+            onChangeStep({ ...step, tasks: [...step.tasks, task] })
+            setAddTask(false)
+          }}
+          onCancel={() => setAddTask(false)}
+        />
       }
       {
         !addTask && <div style={{ margin: "10px 0" }}>
-          <button disabled={!((newName != step.data.label || description != ""))} style={{ marginTop: "10px", marginRight: "5px" }} onClick={() => {
-            step.data.label = newName
-            step.data.description = description
-            close()
-          }}>Done</button>
-          <button style={{ marginTop: "10px" }} onClick={() => close()}>Cancel</button>
+          <button 
+            style={{ marginTop: "10px", marginRight: "5px" }} 
+            onClick={() => {
+              onSaveStep()
+              close()
+            }}>
+            Done
+          </button>
+          <button 
+            style={{ marginTop: "10px" }} 
+            onClick={() => close()}>
+              Cancel
+          </button>
         </div>
       }
     </aside>
   );
 }
 
-const AddTask = ({finish, taskNumber}: { finish: (task: StepTask<ActionType>, save: boolean) => void, taskNumber: number }) => {
+const AddTask = ({onAddTask, onCancel, taskNumber}: { onAddTask: (task: StepTask<ActionType>) => void, onCancel: () => void, taskNumber: number }) => {
   const [task, setTask] = useState<StepTask<ActionType>>({ type: "CUSTOM", parameters: undefined, loop: 0 });
   const [currentTypeSelected, setSelected] = useState<ActionType>("CUSTOM");
 
@@ -76,16 +119,34 @@ const AddTask = ({finish, taskNumber}: { finish: (task: StepTask<ActionType>, sa
       </div>
       <div style={{ marginTop: "10px" }}>
           {
-            currentTypeSelected == "CUSTOM" ? <CustomParamsSetter paramSetter={(customId, loop) => setTask({ type: "CUSTOM", parameters: { id: customId }, loop })} />
-            : currentTypeSelected == "LOCATION" ? <LocationParmsSetter text='User has to go to' paramSetter={(x, y, loop) => { setTask({ type: "LOCATION", parameters: { x, y }, loop }) }} /> :
-            currentTypeSelected == "JUMP" ? <LocationParmsSetter text='User has to jump at' paramSetter={(x, y, loop) => { setTask({ type: "JUMP", parameters: { x, y }, loop }) }} />
-            : currentTypeSelected == "EMOTE" ? <IDAndLocationSetter text="Set the Emote ID" paramSetter={(id, x, y, loop) => setTask({ type: "EMOTE", parameters: { emote_id: id, x, y}, loop })} /> :
-            currentTypeSelected == "NPC_INTERACTION" ? <IDAndLocationSetter text="Set the NPC ID" paramSetter={(id, x, y, loop) => setTask({ type: "NPC_INTERACTION", parameters: { npc_id: id, x, y}, loop })} /> 
+            currentTypeSelected == "CUSTOM" ? 
+            <CustomParamsSetter 
+              paramSetter={(customId, loop) => setTask({ type: "CUSTOM", parameters: { id: customId }, loop })} />
+            : currentTypeSelected == "LOCATION" ? 
+              <LocationParmsSetter 
+                text='User has to go to' 
+                paramSetter={(x, y, loop) => { setTask({ type: "LOCATION", parameters: { x, y }, loop }) }} 
+              /> :
+            currentTypeSelected == "JUMP" ? 
+              <LocationParmsSetter 
+                text='User has to jump at' 
+                paramSetter={(x, y, loop) => { setTask({ type: "JUMP", parameters: { x, y }, loop }) }} 
+              />
+            : currentTypeSelected == "EMOTE" ? 
+              <IDAndLocationSetter 
+                text="Set the Emote ID" 
+                paramSetter={(id, x, y, loop) => setTask({ type: "EMOTE", parameters: { emote_id: id, x, y}, loop })} 
+              /> :
+            currentTypeSelected == "NPC_INTERACTION" ? 
+              <IDAndLocationSetter 
+                text="Set the NPC ID" 
+                paramSetter={(id, x, y, loop) => setTask({ type: "NPC_INTERACTION", parameters: { npc_id: id, x, y}, loop })} 
+              /> 
             : null
           }
       </div>
-      <button disabled={!taskParametersAreValid(task.parameters!)} style={{ marginTop: "10px", marginRight: "5px" }} onClick={() => finish(task!, true)}>Done</button>
-      <button style={{ marginTop: "10px" }} onClick={() => finish(task!, false)}>Cancel</button>
+      <button disabled={!taskParametersAreValid(task.parameters!)} style={{ marginTop: "10px", marginRight: "5px" }} onClick={() => onAddTask(task!)}>Done</button>
+      <button style={{ marginTop: "10px" }} onClick={() => onCancel()}>Cancel</button>
     </div>
   )
 
