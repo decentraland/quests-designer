@@ -32,12 +32,12 @@ export const createActionItems = (task: StepTask<ActionType>) => {
   return actions
 }
 
-export const createNewNode = (id: string, stepInfo: { label: string, step: number }, position: XYPosition, tasks: StepTask<ActionType>[] = [], description?: string): Node<StepNode> => {
+export const createNewNode = (stepid: string, position: XYPosition, tasks: StepTask<ActionType>[] = [], description?: string): Node<StepNode> => {
   return {
-    id,
+    id: stepid,
     type: 'questStep',
     position,
-    data: { label: stepInfo.label, stepNumber: stepInfo.step, tasks, description: description || "" },
+    data: { id: stepid, tasks, description: description || "" },
   };
 }
 
@@ -55,11 +55,11 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
 
   for (const node of filteredNodes) {
     questDefinition.steps.push({
-      id: node.id,
+      id: node.data.id,
       description: node.data.description,
       tasks: node.data.tasks.reduce<Task[]>((acc, curr, currIndex) => {
         acc.push({
-          id: `${node.id}_${currIndex}`,
+          id: `${node.data.id}_${currIndex}`,
           description: "",
           actionItems: createActionItems(curr)
         })
@@ -99,15 +99,13 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
   }
 
   // Create nodes from steps
-  let i = 1;
   for (const step of steps) {
     const { id, description, tasks } = step;
     const tasksToStepTask = tasks.reduce<StepTask<ActionType>[]>((acc, curr) => {
       return  [...acc, ...createStepTasks(curr.actionItems)]
     }, [])
-    const stepNode = createNewNode(id, { step: i, label: step.id }, {x: 0, y:0}, tasksToStepTask, description)
+    const stepNode = createNewNode(id, {x: 0, y:0}, tasksToStepTask, description)
     nodes.push(stepNode);
-    i+=1
   }
 
   if (connections.length === 0) {
@@ -248,7 +246,7 @@ export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
   if (!filteredNodes.length || !filteredEdges.length) return false
 
   for (const node of filteredNodes) {
-    if (!(edges.some((edge) => edge.id == node.id) && edges.some((edge) => edge.id == node.id) && node.data.tasks.length > 0)) {
+    if (!(edges.find((edge) => edge.source == node.id) && edges.find((edge) => edge.target == node.id) && node.data.tasks.length > 0)) {
       isValid = false
       break;
     }

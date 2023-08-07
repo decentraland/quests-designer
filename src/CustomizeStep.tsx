@@ -13,16 +13,16 @@ export const CustomizeStep: React.FunctionComponent<{
   return (
     <aside>
       <button onClick={() => close()}>Close</button>
-      <h1 className="description">Set up Step {step.stepNumber}</h1>
+      <h1 className="description">Set up Step {step.id}</h1>
       <div style={{ margin: "10px 0" }}>
         <p style={{ fontWeight: "bold" }}> Change Step's name</p>
         <input 
           type="text" 
-          value={step.label} 
+          value={step.id} 
           onChange={(event) => 
             onChangeStep({
               ...step, 
-              label: event.target.value 
+              id: event.target.value 
             })} 
         />
       </div>
@@ -198,14 +198,14 @@ const CoordsSetter = ({ coordsSetter }: { coordsSetter: (x: number, y: number) =
     <>
       <div>
         <p>X coord</p>
-        <input type="text" placeholder='X' onChange={(e) => {
+        <input type="number" placeholder='X' onChange={(e) => {
           setCoords({ ...coords, x: Number(e.target.value) })
           coordsSetter(Number(e.target.value), coords.y)
         }} />
       </div>
       <div>
         <p>Y coord</p>
-        <input type="text" placeholder='Y' onChange={(e) => {
+        <input type="number" placeholder='Y' onChange={(e) => {
           setCoords({ ...coords, y: Number(e.target.value) })
           coordsSetter(coords.x, Number(e.target.value))
         }} />
@@ -216,7 +216,6 @@ const CoordsSetter = ({ coordsSetter }: { coordsSetter: (x: number, y: number) =
 
 
 const Loop = ({loopSetter}: {loopSetter: (loop: number) => void}) => {
-
   return (
     <div>
       <p>Should the task be repeated?</p>

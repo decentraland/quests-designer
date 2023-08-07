@@ -77,23 +77,16 @@ export const QuestsDesigner = ({
 
   const [currentCustomizableStep, setCurrentCustomizableStep] = useState<Node<StepNode>| null>(null)
 
-  const [stepNumber, setStepNumber] = useState(1)
   const [globalId, setGlobalId] = useState(1)
   const [lastNodeId, setLastNodeId] = useState<string | null>(null)
   const [currentNodeIdTriggeringAnEdge, setCurrentNodeIdTriggeringAnEdge] = useState<string | null>(null)
 
   const getId = () => {
-    const next = `dndnode_${globalId}`
+    const next = `Step-${globalId}`
     setGlobalId(globalId + 1)
     setLastNodeId(next)
     return next
   };
-
-  const getStepNumber = () => {
-    let number = stepNumber;
-    setStepNumber(stepNumber + 1)
-    return {step: number, label: `Step ${number}`};
-  }
 
   const onConnect = useCallback(
     (params: Edge | Connection) => setEdges((els) => addEdge(params, els)),
@@ -117,8 +110,8 @@ export const QuestsDesigner = ({
           y: event.clientY - reactFlowBounds.top,
         });
 
-        let source = stepNumber > 1 ? lastNodeId : nodes[0].id
-        const newNode = createNewNode(getId(), getStepNumber(), position)
+        let source = nodes.length > 2 ? lastNodeId : nodes[0].id
+        const newNode = createNewNode(getId(), position)
 
         setNodes((nds) => nds.concat(newNode));
         setEdges((eds) => eds.concat({ id: newNode.id, source: source as any, target: newNode.id }));
@@ -140,16 +133,15 @@ export const QuestsDesigner = ({
           // we need to remove the wrapper bounds, in order to get the correct position
           const { top, left } = reactFlowWrapper.current!.getBoundingClientRect();
   
-          let source = currentNodeIdTriggeringAnEdge ? currentNodeIdTriggeringAnEdge : stepNumber > 1 ? lastNodeId : nodes[0].id
+          let source = currentNodeIdTriggeringAnEdge ? currentNodeIdTriggeringAnEdge : nodes.length > 2 ? lastNodeId : nodes[0].id
           setCurrentNodeIdTriggeringAnEdge(null)
 
           let newStepNode: Node<StepNode>;
           if (event instanceof MouseEvent) {
-            newStepNode = createNewNode(getId(), getStepNumber(), reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }))
+            newStepNode = createNewNode(getId(), reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }))
           } else if (event instanceof TouchEvent) {
             newStepNode = createNewNode(
               getId(), 
-              getStepNumber(), 
               reactFlowInstance!.project({ 
                 x: event.touches[0].clientX - left - 75, 
                 y: event.touches[0].clientY - top
@@ -182,10 +174,9 @@ export const QuestsDesigner = ({
               onConnect={onConnect}
               onNodesChange={onNodesChange}
               onNodesDelete={(deletedNodes) => {
-                if (deletedNodes.some((node) => node.data.stepNumber == currentCustomizableStep?.data.stepNumber)) {
+                if (deletedNodes.some((node) => node.data.id == currentCustomizableStep?.data.id)) {
                   setCurrentCustomizableStep(null)
                 }
-                setStepNumber(stepNumber - deletedNodes.length)
               }}
               onNodeClick={(_, node) => {
                 if (currentCustomizableStep && currentCustomizableStep.id == node.id) {
@@ -212,7 +203,7 @@ export const QuestsDesigner = ({
                 onSaveStep={() => { 
                   // step == node here
                   setNodes((nds) => 
-                    nds.map((n) => n.data.stepNumber == currentCustomizableStep.data.stepNumber ? 
+                    nds.map((n) => n.data.id == currentCustomizableStep.data.id ? 
                     { ...n, data: { ...currentCustomizableStep.data } } 
                     : n
                   ))

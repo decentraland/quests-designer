@@ -1,5 +1,6 @@
 import React from 'react';
 import { Node } from 'reactflow';
+import { StepNode } from './types';
 
 export default ({
   nodes, 
@@ -9,7 +10,7 @@ export default ({
   closeDesigner
 }: 
 { 
-  nodes: Node[], generateQuest: () => void, 
+  nodes: Node<StepNode>[], generateQuest: () => void, 
   saveButtonContent: string, 
   isValidQuest: boolean, 
   closeDesigner?: () => void
@@ -21,11 +22,14 @@ export default ({
         {
           nodes.length - 2 ? 
           nodes
-            .filter((node) => node.data.label !== "Start" && node.data.label !== "End")
+            .filter((node) => node.type !== "start" && node.type !== "end")
             .map((node) => (
-              <>
-                <p>{node.data.label} - <span style={{ color: node.data.tasks.length ? "green" : "red" }}>{node.data.tasks.length ? "Valid" : "Invalid"}</span></p>
-              </>
+              <p key={node.data.id}>
+                {node.data.id} - 
+                <span style={{ color: node.data.tasks.length ? "green" : "red" }}>
+                  {node.data.tasks.length ? "Valid" : "Invalid"}
+                </span>
+              </p>
             ))
           : <p>Let's create a new step!</p>
         }

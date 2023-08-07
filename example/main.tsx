@@ -9,7 +9,12 @@ createRoot(document.getElementById('root')!).render(
       initialEdges={[]} 
       initialNodes={initialNodes} 
       closeDesigner={() => alert("close")} 
-      saveDesignButton={{ onClick: () => alert("save") }} 
+      saveDesignButton={{ onClick: (def, nodes, edges) => {
+        console.log(def)
+        console.log(nodes)
+        console.log(edges)
+        alert("Saved")
+      } }} 
     />
   </React.StrictMode>
 )

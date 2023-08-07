@@ -3,9 +3,7 @@ import { Node as RFlowNode, Edge as RFlowEdge} from 'reactflow'
 import { End, QuestStep, Start } from "./CustomNode";
 
 export type StepNode = {
-    label: string, 
-    stepNumber: 
-    number, 
+    id: string, 
     tasks: StepTask<ActionType>[], 
     description: string 
 }

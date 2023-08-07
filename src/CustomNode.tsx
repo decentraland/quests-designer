@@ -72,7 +72,7 @@ export const QuestStep = ({
         position={targetPosition}
         isConnectable={isConnectable}
       />
-      {data?.label}
+      {data?.id}
       <Handle
         type="source"
         position={sourcePosition}
