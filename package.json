@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/decentraland/quests-designer#readme",
   "dependencies": {
+    "decentraland-ui": "^4.10.0",
     "reactflow": "^11.7.4"
   },
   "devDependencies": {
