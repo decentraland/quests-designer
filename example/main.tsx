@@ -8,7 +8,7 @@ createRoot(document.getElementById('root')!).render(
     <QuestsDesigner 
       initialEdges={[]} 
       initialNodes={initialNodes} 
-      closeDesigner={() => alert("close")} 
+      backButton={() => alert("close")} 
       saveDesignButton={{ onClick: async (def, nodes, edges) => {
         console.log(def)
         console.log(nodes)

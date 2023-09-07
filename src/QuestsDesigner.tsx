@@ -52,11 +52,11 @@ export type QuestsDesignerProps = {
     onClick: (questDefinition: QuestDefinition, nodes: Node<StepNode>[], edges: Edge[]) => void
   }
   /**
-   * Optional function to close the designer from the right panel
+   * Optional function to show a close button that execute the given function
    */
   closeDesigner?: () => void,
   /**
-   * Optional function to close the designer from the right panel
+   * Optional function to show back button that executes the given function
    */
   backButton?: () => void,
   /**

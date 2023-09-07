@@ -11,7 +11,7 @@ import _m0 from 'protobufjs/minimal';
 import { Node as Node_2 } from 'reactflow';
 
 // @public (undocumented)
-export const QuestsDesigner: ({ maxConnnectionsPerStep, maxStartingSteps, maxEndSteps, saveDesignButton, closeDesigner, initialEdges, initialNodes }: QuestsDesignerProps) => JSX.Element;
+export const QuestsDesigner: ({ maxConnnectionsPerStep, maxStartingSteps, maxEndSteps, saveDesignButton, closeDesigner, backButton, initialEdges, initialNodes }: QuestsDesignerProps) => JSX.Element;
 
 // @public (undocumented)
 export type QuestsDesignerProps = {
@@ -23,14 +23,15 @@ export type QuestsDesignerProps = {
         onClick: (questDefinition: QuestDefinition, nodes: Node_2<StepNode>[], edges: Edge[]) => void;
     };
     closeDesigner?: () => void;
+    backButton?: () => void;
     initialNodes?: Node_2<StepNode>[];
     initialEdges?: Edge[];
 };
 
 // Warnings were encountered during analysis:
 //
-// dist/QuestsDesigner.d.ts:28:9 - (ae-forgotten-export) The symbol "QuestDefinition" needs to be exported by the entry point index.d.ts
-// dist/QuestsDesigner.d.ts:28:9 - (ae-forgotten-export) The symbol "StepNode" needs to be exported by the entry point index.d.ts
+// dist/QuestsDesigner.d.ts:32:9 - (ae-forgotten-export) The symbol "QuestDefinition" needs to be exported by the entry point index.d.ts
+// dist/QuestsDesigner.d.ts:32:9 - (ae-forgotten-export) The symbol "StepNode" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
