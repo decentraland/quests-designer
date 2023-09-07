@@ -1,41 +1,41 @@
 import { createContext } from 'react';
 import { Edge, Node, XYPosition } from 'reactflow'
-import { ActionType, Params, StepNode, StepTask } from "./types";
+import { ActionType, Params, StepNode, StepTask, StepTaskAction } from "./types";
 import { Action, QuestDefinition, Task } from "./protocol/quests";
 
 export const DesignerContext = createContext({ maxConnnectionsPerStep: 3, maxStartingSteps: 2, maxEndSteps: 5})
 
 export const initialNodes: Node[] = [
   {
-      id: "_START_",
-      type: "start",
-      data: { label: "Start" },
-      position: { x: 250, y: 5 }
+    id: "_START_",
+    type: "start",
+    data: { label: "Start" },
+    position: { x: 250, y: 5 }
   },
   {
-      id: "_END_",
-      type: "end",
-      data: { label: "End" },
-      position: { x: 250, y: 150 }
+    id: "_END_",
+    type: "end",
+    data: { label: "End" },
+    position: { x: 250, y: 150 }
   },
 ]
 
-export const createActionItems = (task: StepTask<ActionType>) => {
+export const createActionItems = (action: StepTaskAction) => {
   const actions: Action[] = []
-  let loop = task.loop == 0 ? 1 : task.loop + 1
+  let loop = action.loop == 0 ? 1 : action.loop + 1
   for (let i = loop; i > 0; i--) {
     actions.push({
-      type: task.type,
-      parameters: task.parameters as any
+      type: action.type,
+      parameters: action.parameters as any
     })
   }
   return actions
 }
 
-export const createNewNode = (stepid: string, position: XYPosition, tasks: StepTask<ActionType>[] = [], description?: string): Node<StepNode> => {
+export const createNewNode = (stepid: string, position: XYPosition, tasks: StepTask[] = [], description?: string, valid = true): Node<StepNode> => {
   return {
     id: stepid,
-    type: 'questStep',
+    type: valid ? 'questStep' : 'questStepInvalid',
     position,
     data: { id: stepid, tasks, description: description || "" },
   };
@@ -57,11 +57,15 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
     questDefinition.steps.push({
       id: node.data.id,
       description: node.data.description,
-      tasks: node.data.tasks.reduce<Task[]>((acc, curr, currIndex) => {
+      tasks: node.data.tasks.reduce<Task[]>((acc, curr) => {
         acc.push({
-          id: `${node.data.id}_${currIndex}`,
-          description: "",
-          actionItems: createActionItems(curr)
+          id: curr.id,
+          description: curr.description,
+          actionItems: curr.actionItems.reduce<Action[]>((acc, curr) => {
+            const toacc = createActionItems(curr)
+            
+            return [...acc, ...toacc]
+          }, [])
         })
         return acc
       }, [])
@@ -101,8 +105,15 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
   // Create nodes from steps
   for (const step of steps) {
     const { id, description, tasks } = step;
-    const tasksToStepTask = tasks.reduce<StepTask<ActionType>[]>((acc, curr) => {
-      return  [...acc, ...createStepTasks(curr.actionItems)]
+    const tasksToStepTask = tasks.reduce<StepTask[]>((acc, curr) => {
+      const stepTask: StepTask = {
+        id: curr.id,
+        description: curr.description,
+        actionItems: [...createStepTasks(curr.actionItems)]
+      }
+
+      acc.push(stepTask)
+      return acc
     }, [])
     const stepNode = createNewNode(id, {x: 0, y:0}, tasksToStepTask, description)
     nodes.push(stepNode);
@@ -202,9 +213,9 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
   return { nodes, edges };
 };
 
-export const createStepTasks = (actions: Action[]): StepTask<ActionType>[] => {
-  const stepTasks: StepTask<ActionType>[] = [];
-  let currentTask: StepTask<ActionType> | null = null;
+export const createStepTasks = (actions: Action[]): StepTaskAction[] => {
+  const stepTasks: StepTaskAction[] = [];
+  let currentTask: StepTaskAction | null = null;
 
   for (const action of actions) {
     if (currentTask === null || currentTask.type !== action.type) {
@@ -213,7 +224,7 @@ export const createStepTasks = (actions: Action[]): StepTask<ActionType>[] => {
       }
       currentTask = {
         type: action.type as ActionType,
-        parameters: undefined,
+        parameters: null,
         loop: 0,
       };
     }
@@ -246,11 +257,27 @@ export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
   if (!filteredNodes.length || !filteredEdges.length) return false
 
   for (const node of filteredNodes) {
-    if (!(edges.find((edge) => edge.source == node.id) && edges.find((edge) => edge.target == node.id) && node.data.tasks.length > 0)) {
+    if (!(
+      edges.find((edge) => edge.source == node.id) && 
+      edges.find((edge) => edge.target == node.id) && 
+      node.data.tasks.length > 0 &&
+      node.data.tasks.every((task) => task.actionItems.length > 0)
+    )) {
       isValid = false
       break;
     }
   }
 
   return isValid
+}
+
+export const isValidNode = (node: Node<StepNode>) => {
+  if (!(
+    node.data.tasks.length > 0 &&
+    node.data.tasks.every((task) => task.actionItems.length > 0)
+  )) {
+    return false
+  }
+
+  return true
 }

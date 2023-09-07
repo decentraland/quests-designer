@@ -3,8 +3,8 @@ import { Node as RFlowNode, Edge as RFlowEdge} from 'reactflow'
 import { End, QuestStep, Start } from "./CustomNode";
 
 export type StepNode = {
-    id: string, 
-    tasks: StepTask<ActionType>[], 
+    id: string,
+    tasks: StepTask[], 
     description: string 
 }
 
@@ -15,19 +15,25 @@ export type ActionType = "CUSTOM" | "LOCATION" | "EMOTE" | "JUMP" | "NPC_INTERAC
 
 export type Params<T> = T extends "CUSTOM" ? { id: string } : 
   T extends "LOCATION" ? { x: number, y: number } : 
-  T extends "EMOTE" ? { emote_id: string, x: number, y: number } : 
+  T extends "EMOTE" ? { id: string, x: number, y: number } : 
   T extends "JUMP" ? { x: number, y: number } : 
-  T extends "NPC_INTERACTION" ? { npc_id: string, x: number, y: number } : 
   never;
 
-export type StepTask<T> = {
-  type: T,
-  parameters: Params<T> | undefined
+export type StepTaskAction = {
+  type: ActionType,
+  parameters: Params<ActionType> | null
   loop: number
+}
+
+export type StepTask = {
+  id: string;
+  description: string;
+  actionItems: StepTaskAction[]
 }
 
 export const nodeTypes = {
   start: Start,
   end: End,
-  questStep: QuestStep
+  questStep: QuestStep,
+  questStepInvalid: QuestStep
 };

@@ -1,53 +1,62 @@
 import React from 'react';
-import { Node } from 'reactflow';
-import { StepNode } from './types';
+import { useStore } from 'reactflow';
+import { Button, ButtonProps } from 'decentraland-ui';
+import { isValidNode } from './utils';
 
 export default ({
-  nodes, 
   generateQuest, 
   saveButtonContent, 
   isValidQuest, 
-  closeDesigner
 }: 
 { 
-  nodes: Node<StepNode>[], generateQuest: () => void, 
+  generateQuest: () => void, 
   saveButtonContent: string, 
   isValidQuest: boolean, 
-  closeDesigner?: () => void
 }) => {
+  const nodes = useStore((state) => state.getNodes())
   return (
     <aside>
-      <div>
-        <h3>Current Steps: {nodes.length - 2}</h3>
-        {
-          nodes.length - 2 ? 
-          nodes
-            .filter((node) => node.type !== "start" && node.type !== "end")
-            .map((node) => (
-              <p key={node.data.id}>
-                {node.data.id} - 
-                <span style={{ color: node.data.tasks.length ? "green" : "red" }}>
-                  {node.data.tasks.length ? "Valid" : "Invalid"}
-                </span>
-              </p>
-            ))
-          : <p>Let's create a new step!</p>
-        }
+      <div className='generate-box'>
+        <h1 className='title'>Current Steps: {nodes.length - 2}</h1>
+        <div className='steps-box'>
+          {
+            nodes.length - 2 > 0 &&
+            nodes
+              .filter((node) => node.type !== "start" && node.type !== "end")
+              .map((node) => (
+                <p className='step' key={node.data.id}>
+                  {node.data.id} - {" "}
+                  <span style={{ color: isValidNode(node) ? "#36D41D" : "#FF0000" }}>
+                    {isValidNode(node) ? "Valid" : "Invalid"}
+                  </span>
+                </p>
+              ))
+          }
+        </div>
+        <Button 
+          primary
+          size='medium'
+          className='generate-quest-btn'
+          disabled={!isValidQuest}
+          content={saveButtonContent}
+          onClick={() => generateQuest()}
+        />
       </div>
-      <div className="dndnode input" onDragStart={(event) => {
-        event.dataTransfer.setData('application/reactflow', 'questStep')
-        event.dataTransfer.effectAllowed = 'move'
-      }} draggable>
-        New Step
-      </div>
-      <p className="description">
-        You can can create a new step by dragging the above button, or by dropping the connection line on the pane on the right
-      </p>
-      <div style={{ display: "flex", justifyContent: "space-between" , margin: "20px 0"}}>
-        <button disabled={!isValidQuest} style={{ padding: "10px", marginRight: "5px"}} onClick={() => generateQuest()}>{saveButtonContent}</button>
-        {
-          closeDesigner && <button  style={{ padding: "10px"}} onClick={() => closeDesigner()}>Close</button>
-        }
+      <div className='new-step-box'>
+        <div>
+          <Button
+            content="new step"
+            className='new-step-btn'
+            draggable
+            onDragStart={(event: React.DragEvent<ButtonProps>) => {
+              event.dataTransfer.setData('application/reactflow', 'questStep')
+              event.dataTransfer.effectAllowed = 'move'
+            }}
+          />
+        </div>
+        <p className="description">
+          Create a new step by dragging the above component onto the canvas, or by creating a connection line.
+        </p>
       </div>
     </aside>
   );

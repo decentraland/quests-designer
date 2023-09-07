@@ -16,9 +16,16 @@ import "reactflow/dist/style.css";
 import Sidebar from "./Sidebar";
 import { CustomizeStep} from "./CustomizeStep";
 import { StepNode, nodeTypes } from './types'
-import { initialNodes as defaultInitialNodes, createNewNode, isValidQuest, generateQuestDefinition, DesignerContext} from './utils'
+import { initialNodes as defaultInitialNodes, createNewNode, isValidQuest, generateQuestDefinition, DesignerContext, isValidNode} from './utils'
 import { QuestDefinition } from "./protocol/quests";
+
+import 'semantic-ui-css/semantic.min.css'
+import 'balloon-css/balloon.min.css'
+import 'decentraland-ui/dist/themes/base-theme.css'
+import 'decentraland-ui/dist/themes/alternative/light-theme.css'
+
 import './index.css'
+import { Back, Button } from "decentraland-ui";
 
 /** 
  * @public 
@@ -111,7 +118,7 @@ export const QuestsDesigner = ({
         });
 
         let source = nodes.length > 2 ? lastNodeId : nodes[0].id
-        const newNode = createNewNode(getId(), position)
+        const newNode = createNewNode(getId(), position, undefined, undefined, false)
 
         setNodes((nds) => nds.concat(newNode));
         setEdges((eds) => eds.concat({ id: newNode.id, source: source as any, target: newNode.id }));
@@ -138,18 +145,32 @@ export const QuestsDesigner = ({
 
           let newStepNode: Node<StepNode>;
           if (event instanceof MouseEvent) {
-            newStepNode = createNewNode(getId(), reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }))
+            newStepNode = createNewNode(
+              getId(), 
+              reactFlowInstance!.project({ x: event.clientX - left - 75, y: event.clientY - top }), 
+              undefined, 
+              undefined, 
+              false
+            )
           } else if (event instanceof TouchEvent) {
             newStepNode = createNewNode(
               getId(), 
               reactFlowInstance!.project({ 
                 x: event.touches[0].clientX - left - 75, 
                 y: event.touches[0].clientY - top
-            }))
+              }),               
+              undefined, 
+              undefined, 
+              false
+            )
           }
   
           setNodes((nds) => nds.concat(newStepNode));
-          setEdges((eds) => eds.concat({ id: newStepNode.id, source: source as any, target: newStepNode.id }));
+          setEdges((eds) => eds.concat({ 
+            id: newStepNode.id, 
+            source: source as any, 
+            target: newStepNode.id 
+          }));
         }
       }
     };
@@ -179,6 +200,7 @@ export const QuestsDesigner = ({
                 }
               }}
               onNodeClick={(_, node) => {
+                if (node.id === "_START_" || node.id === "_END_") return
                 if (currentCustomizableStep && currentCustomizableStep.id == node.id) {
                   setCurrentCustomizableStep(null)
                 } else {
@@ -193,6 +215,16 @@ export const QuestsDesigner = ({
             >
               <Background />
               <Controls />
+              {
+                closeDesigner &&
+                <Button 
+                  content={
+                    <Back />
+                  }
+                  onClick={() => closeDesigner()}
+                  className="back-btn"
+                />
+              }
             </ReactFlow>
           </div>
           {
@@ -201,12 +233,16 @@ export const QuestsDesigner = ({
               <CustomizeStep
                 step={currentCustomizableStep.data}
                 onSaveStep={() => { 
-                  // step == node here
+                  console.log("Changin node: ", isValidNode(currentCustomizableStep))
                   setNodes((nds) => 
-                    nds.map((n) => n.data.id == currentCustomizableStep.data.id ? 
-                    { ...n, data: { ...currentCustomizableStep.data } } 
-                    : n
-                  ))
+                  nds.map((n) => n.id == currentCustomizableStep.id ? 
+                    { 
+                      ...n, 
+                      data: { ...currentCustomizableStep.data }, 
+                      type: isValidNode(currentCustomizableStep) ? "questStep" : "questStepInvalid" 
+                    } 
+                  : n
+                ))
                 }}
                 onChangeStep={(step) => { 
                   setCurrentCustomizableStep({ ...currentCustomizableStep, data: { ...step } })
@@ -216,10 +252,8 @@ export const QuestsDesigner = ({
               : 
               <Sidebar 
                 isValidQuest={isValidQuest(nodes, edges)} 
-                nodes={nodes} 
                 saveButtonContent={saveDesignButton.content || "Generate Quest Definition"}
                 generateQuest={() => triggerGenerateQuest()} 
-                closeDesigner={closeDesigner} 
               />
           }
         </ReactFlowProvider>
