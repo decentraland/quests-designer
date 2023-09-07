@@ -9,10 +9,11 @@ createRoot(document.getElementById('root')!).render(
       initialEdges={[]} 
       initialNodes={initialNodes} 
       closeDesigner={() => alert("close")} 
-      saveDesignButton={{ onClick: (def, nodes, edges) => {
+      saveDesignButton={{ onClick: async (def, nodes, edges) => {
         console.log(def)
         console.log(nodes)
         console.log(edges)
+        await navigator.clipboard.writeText(JSON.stringify(def))
         alert("Saved")
       }, content: "Generate Quest" }} 
     />
