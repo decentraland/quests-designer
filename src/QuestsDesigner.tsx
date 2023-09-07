@@ -25,7 +25,8 @@ import 'decentraland-ui/dist/themes/base-theme.css'
 import 'decentraland-ui/dist/themes/alternative/light-theme.css'
 
 import './index.css'
-import { Back, Button } from "decentraland-ui";
+import { CloseButton } from "./components/CloseButton";
+import { BackButton } from "./components/BackButton";
 
 /** 
  * @public 
@@ -55,6 +56,10 @@ export type QuestsDesignerProps = {
    */
   closeDesigner?: () => void,
   /**
+   * Optional function to close the designer from the right panel
+   */
+  backButton?: () => void,
+  /**
    * Initial nodes to display on the panel
    */
   initialNodes?: Node<StepNode>[],
@@ -71,6 +76,7 @@ export const QuestsDesigner = ({
   maxEndSteps = 5, 
   saveDesignButton, 
   closeDesigner, 
+  backButton,
   initialEdges, 
   initialNodes }: QuestsDesignerProps
 ): JSX.Element => {
@@ -217,13 +223,11 @@ export const QuestsDesigner = ({
               <Controls />
               {
                 closeDesigner &&
-                <Button 
-                  content={
-                    <Back />
-                  }
-                  onClick={() => closeDesigner()}
-                  className="back-btn"
-                />
+                <CloseButton onClick={closeDesigner} />
+              }
+              {
+                backButton &&
+                <BackButton onClick={backButton} />
               }
             </ReactFlow>
           </div>

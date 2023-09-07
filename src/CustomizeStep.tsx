@@ -1,88 +1,9 @@
 import React, { useState } from 'react';
 import { StepTask, ActionType, StepNode, StepTaskAction  } from './types'
 import { Button, Field, Header, SelectField } from 'decentraland-ui';
-
-const Trash = () => {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M7.5 12C7.5 12.4125 7.1625 12.75 6.75 12.75C6.3375 12.75 6 12.4125 6 12V9C6 8.5875 6.3375 8.25 6.75 8.25C7.1625 8.25 7.5 8.5875 7.5 9V12ZM12 12C12 12.4125 11.6625 12.75 11.25 12.75C10.8375 12.75 10.5 12.4125 10.5 12V9C10.5 8.5875 10.8375 8.25 11.25 8.25C11.6625 8.25 12 8.5875 12 9V12ZM13.5 14.25C13.5 14.6632 13.164 15 12.75 15H5.25C4.836 15 4.5 14.6632 4.5 14.25V6H13.5V14.25ZM7.5 3.246C7.5 3.12975 7.6605 3 7.875 3H10.125C10.3395 3 10.5 3.12975 10.5 3.246V4.5H7.5V3.246ZM15.75 4.5H15H12V3.246C12 2.283 11.1593 1.5 10.125 1.5H7.875C6.84075 1.5 6 2.283 6 3.246V4.5H3H2.25C1.8375 4.5 1.5 4.8375 1.5 5.25C1.5 5.6625 1.8375 6 2.25 6H3V14.25C3 15.4905 4.0095 16.5 5.25 16.5H12.75C13.9905 16.5 15 15.4905 15 14.25V6H15.75C16.1625 6 16.5 5.6625 16.5 5.25C16.5 4.8375 16.1625 4.5 15.75 4.5Z"
-        fill="#161518"
-      />
-    </svg>
-  )
-}
-
-const Copy = () => {
-  return (
-    <svg
-      width="19"
-      height="19"
-      viewBox="0 0 19 19"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M13.7992 14.44V14.44C14.8545 14.44 15.7101 13.5845 15.7101 12.5291V5.32004C15.7101 4.06083 14.6893 3.04004 13.4301 3.04004H7.00965C6.16362 3.04004 5.47778 3.72588 5.47778 4.57191V4.57191"
-        stroke="#161518"
-        stroke-width="0.76"
-        stroke-linejoin="round"
-      />
-      <rect
-        x="3.80005"
-        y="5.19385"
-        width="9.6989"
-        height="11.4"
-        rx="1.52"
-        stroke="#161518"
-        stroke-width="1.52"
-        stroke-linejoin="round"
-      />
-    </svg>
-  )
-}
-
-const Close = () => {
-  return (
-    <svg
-      width="32"
-      height="33"
-      viewBox="0 0 32 33"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect
-        x="3.88794"
-        y="3.88818"
-        width="24.2998"
-        height="24.2998"
-        rx="5.83196"
-        fill="#ECEBED"
-      />
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M20.1335 11.9491C20.5129 12.3288 20.5126 12.9443 20.1328 13.3237L13.3228 20.1274C12.943 20.5068 12.3276 20.5065 11.9482 20.1267C11.5688 19.747 11.5691 19.1316 11.9488 18.7521L18.7589 11.9484C19.1386 11.569 19.7541 11.5693 20.1335 11.9491Z"
-        fill="#43404A"
-      />
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M20.1335 20.127C19.7541 20.5068 19.1386 20.507 18.7589 20.1276L11.9488 13.3239C11.5691 12.9445 11.5688 12.3291 11.9482 11.9493C12.3276 11.5696 12.943 11.5693 13.3228 11.9487L20.1328 18.7524C20.5126 19.1318 20.5129 19.7472 20.1335 20.127Z"
-        fill="#43404A"
-      />
-    </svg>
-  )
-}
-
+import { CloseButton } from './components/CloseButton';
+import { CopyButton } from './components/CopyButton';
+import { DeleteButton } from './components/DeleteButton';
 
 export const CustomizeStep: React.FunctionComponent<{
   step: StepNode, 
@@ -100,15 +21,7 @@ export const CustomizeStep: React.FunctionComponent<{
         <div>
           <h1 style={{ fontSize: "22px" }}>Edit Step</h1>
         </div>
-        <Button 
-          content={<Close />}
-          size='small'
-          onClick={() => close()}
-          style={{
-            backgroundColor: "transparent",
-            minWidth: "0px"
-          }}
-        />
+        <CloseButton onClick={() => close()} />
       </div>
       <div style={{ margin: "5px 0" }} className='step-edit-input'>
         <Field 
@@ -154,15 +67,9 @@ export const CustomizeStep: React.FunctionComponent<{
                   content={task.id}
                   onClick={() => setEditTask([task, i])}
                 />
-                <Button
-                  size="small"
+                <DeleteButton 
                   onClick={() => {
                     onChangeStep({ ...step, tasks: step.tasks.filter((_, index) => index != i) })
-                  }}
-                  content={<Trash />}
-                  style={{
-                    backgroundColor: "transparent",
-                    minWidth: "0px"
                   }}
                 />
               </div>
@@ -267,33 +174,14 @@ const Task = ({ onNewTask, onCancel, task }: { task?: StepTask, onNewTask: (t: S
                 inverted
               />
               <div style={{ display: "flex", alignContent: "center" }}>
-                <Button
-                  size="small"
+                <CopyButton
                   onClick={async () => {
-                    await navigator.clipboard.writeText(
-                      `${action.parameters}`
-                    )
+                    await navigator.clipboard.writeText(`${action.parameters}`)
                   }}
-                  content={<Copy />}
-                  style={{
-                    backgroundColor: "transparent",
-                    minWidth: "0",
-                    paddingLeft: "0",
-                    paddingRight: "0",
-                    marginRight: "6px"
-                  }}
-                />
-                <Button
-                  size="small"
+                 />
+                <DeleteButton 
                   onClick={() => {
                     setNewTask({ ...newTask, actionItems: newTask.actionItems.filter((_, index) => index != i) })
-                  }}
-                  content={<Trash />}
-                  style={{
-                    backgroundColor: "transparent",
-                    minWidth: "0",
-                    paddingLeft: "0",
-                    paddingRight: "0",
                   }}
                 />
               </div>
