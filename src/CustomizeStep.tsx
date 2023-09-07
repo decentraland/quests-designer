@@ -197,7 +197,7 @@ export const CustomizeStep: React.FunctionComponent<{
         />
       }
       {
-        !addTask && 
+        !addTask && !editTask && 
         <div style={{ margin: "10px 0" }}>
           <Button 
             style={{ marginTop: "10px", marginRight: "5px" }} 
@@ -438,7 +438,7 @@ const AddAction = ({onAddAction, onCancel, currentAction}: { currentAction?: Ste
       <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "5px" }}>
         <Button
           size='small'
-          content="Add"
+          content={ currentAction ? "Save" : "Add"}
           onClick={() => onAddAction(action!)}
           disabled={!taskParametersAreValid(action.parameters!)}
           primary
