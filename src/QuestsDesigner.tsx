@@ -237,7 +237,6 @@ export const QuestsDesigner = ({
               <CustomizeStep
                 step={currentCustomizableStep.data}
                 onSaveStep={() => { 
-                  console.log("Changin node: ", isValidNode(currentCustomizableStep))
                   setNodes((nds) => 
                   nds.map((n) => n.id == currentCustomizableStep.id ? 
                     { 
