@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')!).render(
         console.log(nodes)
         console.log(edges)
         alert("Saved")
-      } }} 
+      }, content: "Generate Quest" }} 
     />
   </React.StrictMode>
 )
