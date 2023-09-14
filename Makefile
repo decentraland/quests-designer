@@ -1,3 +1,7 @@
+ifneq ($(CI), true)
+LOCAL_ARG = --local --verbose --diagnostics
+endif
+
 test:
 	node_modules/.bin/jest --detectOpenHandles --colors --runInBand $(TESTARGS)
 
