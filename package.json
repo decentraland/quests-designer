@@ -8,7 +8,10 @@
   "scripts": {
     "build": "make build",
     "test": "make test",
-    "example": "vite ./example"
+    "example": "vite ./example",
+    "format": "prettier --write '**/*.{ts,tsx,js,jsx,json,md,mdx,css}'",
+    "lint": "eslint --ext .ts,.tsx,.js,.jsx ./src",
+    "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
     "type": "git",
@@ -26,21 +29,32 @@
   },
   "homepage": "https://github.com/decentraland/quests-designer#readme",
   "dependencies": {
+    "@dcl/quests-client": "^1.0.0",
     "decentraland-ui": "^4.10.0",
     "reactflow": "^11.7.4"
   },
   "devDependencies": {
+    "@dcl/eslint-config": "^1.1.12",
     "@microsoft/api-extractor": "^7.17.0",
     "@types/jest": "^28.1.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react-swc": "^3.3.2",
-    "eslint": "^8.45.0",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-import-resolver-babel-module": "^5.3.2",
+    "eslint-import-resolver-jest": "^3.0.2",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-autofix": "^1.1.0",
+    "eslint-plugin-css-import-order": "^1.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "jest": "^28.1.0",
+    "prettier": "^3.0.3",
     "rxjs": "^7.8.1",
     "ts-jest": "^28.0.4",
     "ts-proto": "^1.156.1",

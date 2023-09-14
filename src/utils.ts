@@ -1,51 +1,111 @@
-import { createContext } from 'react';
-import { Edge, Node, XYPosition } from 'reactflow'
-import { ActionType, Params, StepNode, StepTask, StepTaskAction } from "./types";
-import { Action, QuestDefinition, Task } from "./protocol/quests";
+import { createContext } from "react"
 
-export const DesignerContext = createContext({ maxConnnectionsPerStep: 3, maxStartingSteps: 2, maxEndSteps: 5})
+import {
+  Action,
+  Connection,
+  QuestDefinition,
+  Step,
+  Task,
+} from "@dcl/quests-client/dist/protocol/decentraland/quests/definitions.gen"
+import { validateStepsAndConnections, validateTask } from "@dcl/quests-client/dist/utils"
+import { Edge, Node, XYPosition } from "reactflow"
+
+import { ActionType, Params, StepNode, StepTask, StepTaskAction } from "./types"
+
+export const DesignerContext = createContext({ maxConnnectionsPerStep: 3, maxStartingSteps: 2, maxEndSteps: 5 })
 
 export const initialNodes: Node[] = [
   {
     id: "_START_",
     type: "start",
     data: { label: "Start" },
-    position: { x: 250, y: 5 }
+    position: { x: 250, y: 5 },
   },
   {
     id: "_END_",
     type: "end",
     data: { label: "End" },
-    position: { x: 250, y: 150 }
+    position: { x: 250, y: 150 },
   },
 ]
 
 export const createActionItems = (action: StepTaskAction) => {
   const actions: Action[] = []
-  let loop = action.loop == 0 ? 1 : action.loop + 1
+  const loop = action.loop == 0 || action.loop == null ? 1 : action.loop + 1
   for (let i = loop; i > 0; i--) {
     actions.push({
       type: action.type,
-      parameters: action.parameters as any
+      parameters: action.parameters as any,
     })
   }
   return actions
 }
 
-export const createNewNode = (stepid: string, position: XYPosition, tasks: StepTask[] = [], description?: string, valid = true): Node<StepNode> => {
+export const createNewNode = (
+  stepid: string,
+  position: XYPosition,
+  tasks: StepTask[] = [],
+  description?: string,
+  valid = true,
+): Node<StepNode> => {
   return {
     id: stepid,
-    type: valid ? 'questStep' : 'questStepInvalid',
+    type: valid ? "questStep" : "questStepInvalid",
     position,
     data: { id: stepid, tasks, description: description || "" },
-  };
+  }
+}
+
+const generateQuestSteps = (nodes: Node<StepNode>[]): Step[] => {
+  const steps = []
+  for (const node of nodes) {
+    steps.push({
+      id: node.data.id,
+      description: node.data.description,
+      tasks: generateQuestTasks(node.data.tasks),
+    })
+  }
+
+  return steps
+}
+
+const generateQuestTasks = (stepTasks: StepTask[]) => {
+  return stepTasks.reduce<Task[]>((acc, curr) => {
+    acc.push({
+      id: curr.id,
+      description: curr.description,
+      actionItems: curr.actionItems.reduce<Action[]>((acc, curr) => {
+        const toacc = createActionItems(curr)
+        return [...acc, ...toacc]
+      }, []),
+    })
+    return acc
+  }, [])
+}
+
+const generateQuestConnections = (nodes: Node<StepNode>[], edges: Edge<any>[]): Connection[] => {
+  const connections = []
+  for (const { source, target } of edges) {
+    const nodeSource = nodes.find((node) => node.id === source)
+    const nodeTarget = nodes.find((node) => node.id === target)
+
+    if (!nodeSource || !nodeTarget) {
+      break
+    }
+
+    connections.push({
+      stepFrom: nodeSource.data.id || nodeSource.id!,
+      stepTo: nodeTarget.data.id! || nodeSource.id!,
+    })
+  }
+  return connections
 }
 
 export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any>[]): QuestDefinition | never => {
   const questDefinition: QuestDefinition = {
     steps: [],
-    connections: []
-  };
+    connections: [],
+  }
 
   const filteredNodes = nodes.filter((node) => node.type != "start" && node.type != "end")
 
@@ -53,28 +113,7 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
     throw new Error("Missing steps")
   }
 
-  for (const node of filteredNodes) {
-    questDefinition.steps.push({
-      id: node.data.id,
-      description: node.data.description,
-      tasks: node.data.tasks.reduce<Task[]>((acc, curr) => {
-        acc.push({
-          id: curr.id,
-          description: curr.description,
-          actionItems: curr.actionItems.reduce<Action[]>((acc, curr) => {
-            const toacc = createActionItems(curr)
-            
-            return [...acc, ...toacc]
-          }, [])
-        })
-        return acc
-      }, [])
-    })   
-  }
-
-  if (questDefinition.steps.some((step) => step.tasks.length == 0)) {
-    throw new Error("Invalid Tasks")
-  }
+  questDefinition.steps = generateQuestSteps(filteredNodes)
 
   const filteredEdges = edges.filter((edge) => edge.source != "_START_" && edge.target != "_END_")
 
@@ -82,59 +121,58 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
     throw new Error("Missing connections between steps")
   }
 
-  for (const { source, target } of filteredEdges) {
-    questDefinition.connections.push({
-      stepFrom: source,
-      stepTo: target
-    })
-  }
+  questDefinition.connections = generateQuestConnections(filteredNodes, filteredEdges)
 
+  validateStepsAndConnections({ definition: questDefinition })
 
   return questDefinition
 }
 
-export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestDefinition, nodePositions?: Record<string, { x: number, y: number }>): { nodes: Node<StepNode>[], edges: Edge<any>[] } | never => {
-  const { steps, connections } = questDefinition;
-  const nodes: Node<StepNode>[] = [...initialNodes];
-  const edges: Edge<any>[] = [];
+export const generateNodesAndEdgesFromQuestDefinition = (
+  questDefinition: QuestDefinition,
+  nodePositions?: Record<string, { x: number; y: number }>,
+): { nodes: Node<StepNode>[]; edges: Edge<any>[] } | never => {
+  const { steps, connections } = questDefinition
+  const nodes: Node<StepNode>[] = [...initialNodes]
+  const edges: Edge<any>[] = []
 
   if (steps.length === 0) {
-    throw new Error("QuestDefinition does not have any steps.");
+    throw new Error("QuestDefinition does not have any steps.")
   }
 
   // Create nodes from steps
   for (const step of steps) {
-    const { id, description, tasks } = step;
+    const { id, description, tasks } = step
     const tasksToStepTask = tasks.reduce<StepTask[]>((acc, curr) => {
       const stepTask: StepTask = {
         id: curr.id,
         description: curr.description,
-        actionItems: [...createStepTasks(curr.actionItems)]
+        actionItems: [...createStepTasks(curr.actionItems)],
       }
 
       acc.push(stepTask)
       return acc
     }, [])
-    const stepNode = createNewNode(id, {x: 0, y:0}, tasksToStepTask, description)
-    nodes.push(stepNode);
+    const stepNode = createNewNode(id, { x: 0, y: 0 }, tasksToStepTask, description)
+    nodes.push(stepNode)
   }
 
   if (connections.length === 0) {
-    throw new Error("QuestDefinition does not have any connections between steps.");
+    throw new Error("QuestDefinition does not have any connections between steps.")
   }
 
   const iWithoutTo = 0
 
   // Create edges from connections
   for (const connection of connections) {
-    const { stepFrom, stepTo } = connection;
+    const { stepFrom, stepTo } = connection
     if (!stepFrom || !stepTo) {
-      throw new Error("Invalid connection data.");
+      throw new Error("Invalid connection data.")
     }
 
-    let id = stepTo;
+    let id = stepTo
     if (edges.find((e) => e.id == id)) {
-      id = `reactflow__edge-${stepFrom}-${stepTo}`;
+      id = `reactflow__edge-${stepFrom}-${stepTo}`
     }
 
     if (connections.every((connection) => connection.stepTo != stepFrom)) {
@@ -142,8 +180,8 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
         id: stepFrom,
         source: "_START_",
         target: stepFrom,
-      };
-      edges.push(edge);
+      }
+      edges.push(edge)
     }
 
     if (connections.every((connection) => connection.stepFrom != stepTo)) {
@@ -151,16 +189,16 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
         id: iWithoutTo > 0 ? "_END_" : `reactflow__edge-${stepTo}-_END_`,
         source: stepTo,
         target: "_END_",
-      };
-      edges.push(edge);
+      }
+      edges.push(edge)
     }
 
     const edge: Edge<any> = {
       id,
       source: stepFrom,
       target: stepTo,
-    };
-    edges.push(edge);
+    }
+    edges.push(edge)
   }
 
   if (nodePositions) {
@@ -186,7 +224,7 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
       }
       return 0
     })
-    const sources: Record<string, { lastXPosition: number, nodes: number }> = {}
+    const sources: Record<string, { lastXPosition: number; nodes: number }> = {}
     for (const edge of edges) {
       const nodeSource = nodes.find((node) => node.id == edge.source)
       const nodeTarget = nodes.find((node) => node.id == edge.target)
@@ -199,85 +237,105 @@ export const generateNodesAndEdgesFromQuestDefinition = (questDefinition: QuestD
         }
         nodeTarget.position.y = nodeSource.position.y + 100
         if (nodeSource.type == "start") {
-          nodeTarget.position.x = nodeSource.position.x + (sources[edge.source].nodes || 1) * (sources[edge.source].lastXPosition > nodeSource.position.x ? -40 : 40)
+          nodeTarget.position.x =
+            nodeSource.position.x +
+            (sources[edge.source].nodes || 1) * (sources[edge.source].lastXPosition > nodeSource.position.x ? -40 : 40)
           sources[edge.source].nodes += 1
           sources[nodeTarget.id] = { lastXPosition: nodeTarget.position.x, nodes: 0 }
         } else {
           nodeTarget.position.x = sources[edge.source].lastXPosition
         }
-        sources[edge.source] = { lastXPosition: nodeTarget.position.x, nodes: sources[edge.source].nodes+1 }
+        sources[edge.source] = { lastXPosition: nodeTarget.position.x, nodes: sources[edge.source].nodes + 1 }
       }
     }
   }
 
-  return { nodes, edges };
-};
+  return { nodes, edges }
+}
 
 export const createStepTasks = (actions: Action[]): StepTaskAction[] => {
-  const stepTasks: StepTaskAction[] = [];
-  let currentTask: StepTaskAction | null = null;
+  const stepTasks: StepTaskAction[] = []
+  let currentTask: StepTaskAction | null = null
 
   for (const action of actions) {
     if (currentTask === null || currentTask.type !== action.type) {
       if (currentTask !== null) {
-        stepTasks.push(currentTask);
+        stepTasks.push(currentTask)
       }
       currentTask = {
         type: action.type as ActionType,
         parameters: null,
-        loop: 0,
-      };
+        loop: null,
+      }
     }
 
     if (currentTask.type == action.type) {
-      currentTask.loop++;
+      if (currentTask.loop === null) {
+        currentTask.loop = 0
+      }
+      currentTask.loop++
     }
 
     if (currentTask.parameters === undefined) {
-      currentTask.parameters = action.parameters as Params<ActionType>;
+      currentTask.parameters = action.parameters as Params<ActionType>
     } else if (currentTask.parameters && typeof action.parameters === "object") {
-      currentTask.parameters = { ...currentTask.parameters, ...action.parameters };
+      currentTask.parameters = { ...currentTask.parameters, ...action.parameters }
     }
   }
 
   if (currentTask !== null) {
-    stepTasks.push(currentTask);
+    stepTasks.push(currentTask)
   }
 
-  return stepTasks;
-};
-
-
-export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
-  let isValid = true;
-
-  const filteredNodes = nodes.filter((node) => node.id != "_START_" && node.id != "_END_")
-  const filteredEdges = edges.filter((edge) => edge.source != "_START_" || edge.target != "_END_")
-
-  if (!filteredNodes.length || !filteredEdges.length) return false
-
-  for (const node of filteredNodes) {
-    if (!(
-      edges.find((edge) => edge.source == node.id) && 
-      edges.find((edge) => edge.target == node.id) && 
-      node.data.tasks.length > 0 &&
-      node.data.tasks.every((task) => task.actionItems.length > 0)
-    )) {
-      isValid = false
-      break;
-    }
-  }
-
-  return isValid
+  return stepTasks
 }
 
-export const isValidNode = (node: Node<StepNode>) => {
-  if (!(
-    node.data.tasks.length > 0 &&
-    node.data.tasks.every((task) => task.actionItems.length > 0)
-  )) {
+export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
+  try {
+    generateQuestDefinition(nodes, edges)
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+export const isValidNode = (node: Node<StepNode>, nodes: Node<StepNode>[]) => {
+  if (!nodeIsUniqueStepID(node.data.id, nodes) || !nodeMustHaveDescription(node.data)) {
     return false
   }
 
+  if (!node.data.tasks.length) return false
+
+  for (const task of node.data.tasks) {
+    if (!isValidStepTask(task, nodes)) {
+      return false
+    }
+  }
+
   return true
+}
+
+export const nodeIsUniqueStepID = (id: string, nodes: Node<StepNode>[]) =>
+  nodes.filter((node) => node.data.id === id).length === 1
+
+export const stepTaskIsUniqueID = (id: string, nodes: Node<StepNode>[]) =>
+  nodes.every((node) => {
+    if (!node.data.tasks || !node.data.tasks.length) return true
+    return node.data.tasks.filter((t) => t.id == id).length === 1
+  })
+
+export const stepTaskMustHaveDescription = (task: StepTask) => !!task.description.length
+
+export const nodeMustHaveDescription = (node: StepNode) => !!node.description.length
+
+export const isValidStepTask = (stepTask: StepTask, nodes: Node<StepNode>[]): boolean => {
+  const task = generateQuestTasks([stepTask])[0]
+
+  try {
+    validateTask(task)
+  } catch (error) {
+    return false
+  }
+
+  return nodes.every((node) => node.data.tasks.filter((t) => t.id == task.id).length === 1)
 }

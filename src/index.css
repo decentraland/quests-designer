@@ -1,27 +1,27 @@
 .react-flow__node-questStep {
   padding: 10px;
-  background-color: #736E7D;
+  background-color: #736e7d;
   color: white;
   border-radius: 5px;
 }
 
 .react-flow__node-questStepInvalid {
   padding: 10px;
-  background-color: #FF0000;
+  background-color: #736e7d;
   color: white;
   border-radius: 5px;
 }
 
 .react-flow__node-start {
   padding: 10px;
-  background-color: #FF7439;
+  background-color: #ff7439;
   color: white;
   border-radius: 5px;
 }
 
 .react-flow__node-end {
   padding: 10px;
-  background-color: #691FA9;
+  background-color: #691fa9;
   color: white;
   border-radius: 5px;
 }
@@ -39,9 +39,6 @@
   font-size: 12px;
 }
 
-.dndflow aside .generate-box {
-  border-bottom: 1px solid #CFCDD4;
-}
 
 .dndflow aside .description {
   margin-top: 12px;
@@ -58,7 +55,10 @@
 }
 
 .dndflow aside .new-step-box {
-  margin-top: 20px;
+  margin: 10px 0 20px 0;
+  background-color: #ecebed;
+  padding: 10px;
+  border-radius: 6px;
 }
 
 .dndflow aside .step {
@@ -69,13 +69,13 @@
 
 .ui.button.generate-quest-btn {
   font-size: 16px;
-  width: 100%;
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .ui.button.new-step-btn {
-  background-color: #736E7D;
-  color: #FCFCFC;
+  background-color: #736e7d;
+  color: #fcfcfc;
   width: 100%;
   font-size: 16px;
 }
@@ -127,6 +127,7 @@ aside .step-edit-input > .dcl.field {
 
 aside .step-edit-select-input > .dcl.select-field {
   min-width: 0;
+  color: #ff2d5379;
 }
 
 .ui.button.back-btn {
@@ -138,4 +139,3 @@ aside .step-edit-select-input > .dcl.select-field {
   z-index: 5;
   min-width: 0;
 }
-

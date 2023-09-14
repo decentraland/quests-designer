@@ -1,113 +1,134 @@
-import React, { useState } from 'react';
-import { StepTask, ActionType, StepNode, StepTaskAction  } from './types'
-import { Button, Field, Header, SelectField } from 'decentraland-ui';
-import { CloseButton } from './components/CloseButton';
-import { CopyButton } from './components/CopyButton';
-import { DeleteButton } from './components/DeleteButton';
+import React, { useState } from "react"
 
-export const CustomizeStep: React.FunctionComponent<{
-  step: StepNode, 
-  close: () => void, 
-  onSaveStep: () => void,
-  onChangeStep: (step:StepNode) => void 
-}> = 
-({ step, close, onSaveStep, onChangeStep }) => {
+import { Button } from "decentraland-ui/dist/components/Button/Button"
+import { Field } from "decentraland-ui/dist/components/Field/Field"
+import { Header } from "decentraland-ui/dist/components/Header/Header"
+import { SelectField } from "decentraland-ui/dist/components/SelectField/SelectField"
+import { Node, useStore } from "reactflow"
+
+import { CloseButton } from "./components/CloseButton"
+import { CopyButton } from "./components/CopyButton"
+import { DeleteButton } from "./components/DeleteButton"
+import { ActionType, StepNode, StepTask, StepTaskAction } from "./types"
+import {
+  isValidStepTask,
+  nodeIsUniqueStepID,
+  nodeMustHaveDescription,
+  stepTaskIsUniqueID,
+  stepTaskMustHaveDescription,
+} from "./utils"
+
+type CustomizeStepProps = {
+  step: StepNode
+  close: () => void
+  onSaveStep: () => void
+  onChangeStep: (s: StepNode) => void
+}
+
+export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
+  step,
+  close,
+  onSaveStep,
+  onChangeStep,
+}) => {
   const [addTask, setAddTask] = useState(false)
   const [editTask, setEditTask] = useState<[StepTask, number] | null>(null)
 
+  const nodes = useStore((state) => state.getNodes() as Node<StepNode>[])
+
   return (
-    <aside>
-      <div className='edit-step-title-box'>
+    <aside style={{ overflowY: "scroll" }}>
+      <div className="edit-step-title-box">
         <div>
           <h1 style={{ fontSize: "22px" }}>Edit Step</h1>
         </div>
         <CloseButton onClick={() => close()} />
       </div>
-      <div style={{ margin: "5px 0" }} className='step-edit-input'>
-        <Field 
+      <div style={{ margin: "5px 0" }} className="step-edit-input">
+        <Field
           label="ID"
-          kind='full'
-          size='small'
-          placeholder='Step ID'
+          kind="full"
+          size="small"
+          placeholder="Step ID"
           value={step.id}
           onChange={(event) => {
             onChangeStep({
-              ...step, 
-              id: event.target.value 
+              ...step,
+              id: event.target.value,
             })
           }}
+          error={!nodeIsUniqueStepID(step.id, nodes)}
+          message={nodeIsUniqueStepID(step.id, nodes) ? undefined : "This ID already exists"}
         />
       </div>
-      <div style={{ margin: "5px 0" }} className='step-edit-input'>
-        <Field 
+      <div style={{ margin: "5px 0" }} className="step-edit-input">
+        <Field
           label="Description"
-          kind='full'
-          size='small'
-          placeholder='Step Description'
+          kind="full"
+          size="small"
+          placeholder="Step Description"
           value={step.description}
           onChange={(event) => {
             onChangeStep({
-              ...step, 
-              description: event.target.value 
+              ...step,
+              description: event.target.value,
             })
           }}
+          error={nodeMustHaveDescription(step)}
+          message={nodeMustHaveDescription(step) ? "Must have a description" : undefined}
         />
       </div>
-      {
-        step.tasks.length && !addTask && !editTask ? 
+      {step.tasks.length && !addTask && !editTask ? (
         <div style={{ marginBottom: "20px" }}>
-          <Header sub>
-            Tasks
-          </Header>
-          { 
-            step.tasks.map((task, i) => (
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }} >
+          <Header sub>Tasks</Header>
+          {step.tasks.map((task, i) => {
+            const isValid = isValidStepTask(task, nodes)
+            return (
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
                 <Button
-                  inverted
+                  inverted={isValid}
+                  negative={!isValid}
                   content={task.id}
                   onClick={() => setEditTask([task, i])}
                 />
-                <DeleteButton 
+                <DeleteButton
                   onClick={() => {
-                    onChangeStep({ ...step, tasks: step.tasks.filter((_, index) => index != i) })
+                    onChangeStep({
+                      ...step,
+                      tasks: step.tasks.filter((_, index) => index != i),
+                    })
                   }}
                 />
               </div>
-            )) 
-            }
+            )
+          })}
         </div>
-        : null
-      }
-      {
-        !addTask && !editTask && <Button content="add task" size='small' onClick={() => setAddTask(true)} secondary />
-      }
-      {
-        addTask &&
-        <Task 
+      ) : null}
+      {!addTask && !editTask && <Button content="add task" size="small" onClick={() => setAddTask(true)} secondary />}
+      {addTask && (
+        <Task
           onNewTask={(task) => {
             onChangeStep({ ...step, tasks: [...step.tasks, task] })
             setAddTask(false)
           }}
           onCancel={() => setAddTask(false)}
         />
-      }
-      {
-        editTask &&
+      )}
+      {editTask && (
         <Task
           task={editTask[0]}
           onNewTask={(task) => {
-            const tasks = step.tasks.map((t, i) => i == editTask[1] ? task : t)
+            const tasks = step.tasks.map((t, i) => (i == editTask[1] ? task : t))
             onChangeStep({ ...step, tasks })
             setEditTask(null)
           }}
           onCancel={() => setEditTask(null)}
         />
-      }
-      {
-        !addTask && !editTask && 
+      )}
+      {!addTask && !editTask && (
         <div style={{ margin: "10px 0" }}>
-          <Button 
-            style={{ marginTop: "10px", marginRight: "5px" }} 
+          <Button
+            style={{ marginTop: "10px", marginRight: "5px" }}
             onClick={() => {
               onSaveStep()
               close()
@@ -115,143 +136,153 @@ export const CustomizeStep: React.FunctionComponent<{
             content="Done"
             primary
           />
-          <Button
-            style={{ marginTop: "10px" }} 
-            onClick={() => close()}
-            content="Cancel"
-            secondary
-          />
+          <Button style={{ marginTop: "10px" }} onClick={() => close()} content="Cancel" secondary />
         </div>
-      }
+      )}
     </aside>
-  );
+  )
 }
 
-const Task = ({ onNewTask, onCancel, task }: { task?: StepTask, onNewTask: (t: StepTask) => void; onCancel: () => void }) => {
-  const [newTask, setNewTask] = useState<StepTask>({ 
-    id: task?.id || "", 
-    description: task?.description || "", 
-    actionItems: task?.actionItems || [] 
+const Task = ({
+  onNewTask,
+  onCancel,
+  task,
+}: {
+  task?: StepTask
+  onNewTask: (t: StepTask) => void
+  onCancel: () => void
+}) => {
+  const [newTask, setNewTask] = useState<StepTask>({
+    id: task?.id || "",
+    description: task?.description || "",
+    actionItems: task?.actionItems || [],
   })
 
   const [newAction, setNewAction] = useState(false)
   const [editAction, setEditAction] = useState<[StepTaskAction, number] | null>(null)
 
+  const nodes = useStore((state) => state.getNodes() as Node<StepNode>[])
+
   return (
     <div>
       <p style={{ fontSize: "16px", fontWeight: "600" }}>Add a Task to Step</p>
-     <div style={{ margin: "5px 0" }} className='step-edit-input'>
-        <Field 
+      <div style={{ margin: "5px 0" }} className="step-edit-input">
+        <Field
           label="ID"
-          kind='full'
-          size='small'
-          placeholder='Task ID'
+          kind="full"
+          size="small"
+          placeholder="Task ID"
           value={newTask.id}
-          onChange={(e) => setNewTask({ ...newTask, id: e.target.value }) }
+          onChange={(e) => setNewTask({ ...newTask, id: e.target.value })}
+          error={!stepTaskIsUniqueID(newTask.id, nodes)}
+          message={!stepTaskIsUniqueID(newTask.id, nodes) ? "The ID already exists" : undefined}
         />
       </div>
-      <div style={{ margin: "5px 0" }} className='step-edit-input'>
-        <Field 
+      <div style={{ margin: "5px 0" }} className="step-edit-input">
+        <Field
           label="Description"
-          kind='full'
-          size='small'
-          placeholder='Task Description'
+          kind="full"
+          size="small"
+          placeholder="Task Description"
           value={newTask.description}
-          onChange={(e) => setNewTask({ ...newTask, description: e.target.value }) }
+          onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+          error={!stepTaskMustHaveDescription(newTask)}
+          message={!stepTaskMustHaveDescription(newTask) ? "Must have a description" : undefined}
         />
       </div>
       <div>
-        <Header sub>
-          Actions
-        </Header>
-        {
-          newTask.actionItems.length > 0 && !newAction && !editAction &&
+        <Header sub>Actions</Header>
+        {newTask.actionItems.length > 0 &&
+          !newAction &&
+          !editAction &&
           newTask.actionItems.map((action, i) => (
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", marginTop: "10px"}} >
-              <Button
-                content={`${action.type}`}
-                onClick={() => setEditAction([action, i])}
-                inverted
-              />
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", marginTop: "10px" }}>
+              <Button content={`${action.type}`} onClick={() => setEditAction([action, i])} inverted />
               <div style={{ display: "flex", alignContent: "center" }}>
                 <CopyButton
                   onClick={async () => {
                     await navigator.clipboard.writeText(`${action.parameters}`)
                   }}
-                 />
-                <DeleteButton 
+                />
+                <DeleteButton
                   onClick={() => {
                     setNewTask({ ...newTask, actionItems: newTask.actionItems.filter((_, index) => index != i) })
                   }}
                 />
               </div>
             </div>
-          ))
-        }
-        {
-          newAction && 
-          <AddAction 
+          ))}
+        {newAction && (
+          <AddAction
             onAddAction={(action) => {
               setNewTask({ ...newTask, actionItems: [...newTask.actionItems, action] })
               setNewAction(false)
-            }} 
+            }}
             onCancel={() => setNewAction(false)}
           />
-        }
-        {
-          editAction &&
+        )}
+        {editAction && (
           <AddAction
             currentAction={editAction[0]}
             onAddAction={(action) => {
-              setNewTask({ 
-                ...newTask, 
-                actionItems: newTask.actionItems.map((a, i) => i == editAction[1] ? action : a) 
+              setNewTask({
+                ...newTask,
+                actionItems: newTask.actionItems.map((a, i) => (i == editAction[1] ? action : a)),
               })
               setEditAction(null)
             }}
             onCancel={() => setEditAction(null)}
           />
-        }
-        {
-          !newAction && !editAction &&
-          <Button style={{ marginTop: "15px" }} content="add action" size='small' onClick={() => setNewAction(true)} secondary />
-        }
+        )}
+        {!newAction && !editAction && (
+          <Button
+            style={{ marginTop: "15px" }}
+            content="add action"
+            size="small"
+            onClick={() => setNewAction(true)}
+            secondary
+          />
+        )}
       </div>
-      {
-        !newAction && !editAction &&
+      {!newAction && !editAction && (
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
-          <Button 
-            size='small'
+          <Button
+            size="small"
             content="Save Task"
             onClick={() => onNewTask(newTask)}
             primary
             style={{ marginRight: "5px" }}
           />
-          <Button 
-            size='small'
-            content="Cancel"
-            onClick={() => onCancel()}
-          />
+          <Button size="small" content="Cancel" onClick={() => onCancel()} />
         </div>
-      }
+      )}
     </div>
   )
 }
 
-const AddAction = ({onAddAction, onCancel, currentAction}: { currentAction?: StepTaskAction, onAddAction: (action: StepTaskAction) => void, onCancel: () => void }) => {
-  const [action, setAction] = useState<StepTaskAction>({ 
-    type: currentAction?.type || "CUSTOM", 
-    parameters: currentAction?.parameters || null, 
-    loop: currentAction?.loop || 0 
-  });
-  const [currentTypeSelected, setSelected] = useState<ActionType>(currentAction?.type || "CUSTOM");
+const AddAction = ({
+  onAddAction,
+  onCancel,
+  currentAction,
+}: {
+  currentAction?: StepTaskAction
+  onAddAction: (action: StepTaskAction) => void
+  onCancel: () => void
+}) => {
+  const [action, setAction] = useState<StepTaskAction>({
+    type: currentAction?.type || "CUSTOM",
+    parameters: currentAction?.parameters || null,
+    loop: currentAction?.loop || null,
+  })
+
+  const [currentTypeSelected, setSelected] = useState<ActionType>(currentAction?.type || "CUSTOM")
 
   return (
     <div>
       <div>
         <p style={{ fontSize: "16px", fontWeight: "600" }}>{currentAction ? "Edit Action" : "Add a new action"}</p>
-        <div className='step-edit-select-input'>
-          <SelectField 
+        <div className="step-edit-select-input">
+          <SelectField
             label="Action type"
             border
             closeOnChange
@@ -259,175 +290,190 @@ const AddAction = ({onAddAction, onCancel, currentAction}: { currentAction?: Ste
             value={currentTypeSelected}
             options={[
               {
-                key:"CUSTOM", value: "CUSTOM", text: "CUSTOM"
+                key: "CUSTOM",
+                value: "CUSTOM",
+                text: "CUSTOM",
               },
               {
-                key:"LOCATION", value: "LOCATION", text: "LOCATION"
+                key: "LOCATION",
+                value: "LOCATION",
+                text: "LOCATION",
               },
               {
-                key:"EMOTE", value: "EMOTE", text: "EMOTE"
+                key: "EMOTE",
+                value: "EMOTE",
+                text: "EMOTE",
               },
               {
-                key:"JUMP", value: "JUMP", text: "JUMP"
-              }
+                key: "JUMP",
+                value: "JUMP",
+                text: "JUMP",
+              },
             ]}
             onChange={(_, { value }) => {
-              setAction({ type: value as ActionType, parameters: null, loop: 1 })
+              setAction({ type: value as ActionType, parameters: null, loop: null })
               setSelected(value as ActionType)
             }}
           />
         </div>
       </div>
       <div>
-          {
-            currentTypeSelected == "CUSTOM" ? 
-            <CustomParamsSetter 
-              paramSetter={(customId, loop) => setAction({ type: "CUSTOM", parameters: { id: customId }, loop })}
-              currentState={{ 
-                loop: action.loop, 
-                id: action?.parameters && "id" in action.parameters ? action.parameters.id : "" 
-              }}
-            />
-            : currentTypeSelected == "LOCATION" ? 
-              <LocationParmsSetter 
-                helpText='User has to go to: ' 
-                paramSetter={(x, y, loop) => { setAction({ type: "LOCATION", parameters: { x, y }, loop }) }} 
-                currentState={{ 
-                  loop: action.loop, 
-                  x: action?.parameters && "x" in action.parameters ? action.parameters.x : 0, 
-                  y: action?.parameters && "y" in action.parameters ? action.parameters.y : 0
-                }}
-              /> :
-            currentTypeSelected == "JUMP" ? 
-              <LocationParmsSetter 
-                helpText='User has to jump at: ' 
-                paramSetter={(x, y, loop) => { setAction({ type: "JUMP", parameters: { x, y }, loop }) }} 
-                currentState={{ 
-                  loop: action.loop, 
-                  x: action?.parameters && "x" in action.parameters ? action.parameters.x : 0, 
-                  y: action?.parameters && "y" in action.parameters ? action.parameters.y : 0
-                }}
-              />
-            : currentTypeSelected == "EMOTE" ? 
-              <IDAndLocationSetter 
-                label="Emote ID"
-                helpText='User has to play an emote: '
-                paramSetter={(id, x, y, loop) => setAction({ type: "EMOTE", parameters: { id: id, x, y}, loop })} 
-                currentState={{ 
-                  id: action?.parameters && "id" in action.parameters ? action.parameters.id : "",
-                  loop: action.loop, 
-                  x: action?.parameters && "x" in action.parameters ? action.parameters.x : 0, 
-                  y: action?.parameters && "y" in action.parameters ? action.parameters.y : 0
-                }}
-              /> 
-            : null
-          }
+        {currentTypeSelected == "CUSTOM" ? (
+          <CustomParamsSetter
+            paramSetter={(customId, loop) => setAction({ type: "CUSTOM", parameters: { id: customId }, loop })}
+            currentState={{
+              loop: action.loop,
+              id: action?.parameters && "id" in action.parameters ? action.parameters.id : "",
+            }}
+          />
+        ) : currentTypeSelected == "LOCATION" ? (
+          <LocationParmsSetter
+            helpText="User has to go to: "
+            paramSetter={(x, y, loop) => {
+              setAction({ type: "LOCATION", parameters: { x, y }, loop })
+            }}
+            currentState={{
+              loop: action.loop,
+              x: action?.parameters && "x" in action.parameters ? action.parameters.x : null,
+              y: action?.parameters && "y" in action.parameters ? action.parameters.y : null,
+            }}
+          />
+        ) : currentTypeSelected == "JUMP" ? (
+          <LocationParmsSetter
+            helpText="User has to jump at: "
+            paramSetter={(x, y, loop) => {
+              setAction({ type: "JUMP", parameters: { x, y }, loop })
+            }}
+            currentState={{
+              loop: action.loop,
+              x: action?.parameters && "x" in action.parameters ? action.parameters.x : null,
+              y: action?.parameters && "y" in action.parameters ? action.parameters.y : null,
+            }}
+          />
+        ) : currentTypeSelected == "EMOTE" ? (
+          <IDAndLocationSetter
+            label="Emote ID"
+            helpText="User has to play an emote: "
+            paramSetter={(id, x, y, loop) => setAction({ type: "EMOTE", parameters: { id: id, x, y }, loop })}
+            currentState={{
+              id: action?.parameters && "id" in action.parameters ? action.parameters.id : "",
+              loop: action.loop,
+              x: action?.parameters && "x" in action.parameters ? action.parameters.x : null,
+              y: action?.parameters && "y" in action.parameters ? action.parameters.y : null,
+            }}
+          />
+        ) : null}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "5px" }}>
         <Button
-          size='small'
-          content={ currentAction ? "Save" : "Add"}
+          size="small"
+          content={currentAction ? "Save" : "Add"}
           onClick={() => onAddAction(action!)}
           disabled={!taskParametersAreValid(action.parameters!)}
           primary
         />
-        <Button
-          size='small'
-          content="Cancel"
-          onClick={() => onCancel()}
-          secondary
-        />
+        <Button size="small" content="Cancel" onClick={() => onCancel()} secondary />
       </div>
     </div>
   )
-
-
 }
 
-const CustomParamsSetter = 
-({paramSetter, currentState}: {paramSetter: (customId: string, loop: number) => void, currentState: { id: string, loop: number }}) => {
-  const [state, setState] = useState({  
+const CustomParamsSetter = ({
+  paramSetter,
+  currentState,
+}: {
+  paramSetter: (customId: string, loop: number | null) => void
+  currentState: { id: string; loop: number | null }
+}) => {
+  const [state, setState] = useState({
     id: currentState.id || "",
-    loop: currentState.loop || 0
+    loop: currentState.loop || null,
   })
   return (
     <div>
-      <div className='step-edit-input'>
+      <div className="step-edit-input">
         <Field
           label="Action ID"
           placeholder="ID parameter"
           value={state.id}
-          kind='full'
-          size='small'
+          kind="full"
+          size="small"
           onChange={(e) => {
-            setState({ ...state, id: e.target.value });
-            paramSetter(e.target.value, state.loop)
+            setState({ ...state, id: e.target.value })
+            paramSetter(e.target.value, Number(state.loop))
           }}
         />
       </div>
-      <Loop 
+      <Loop
         loopSetter={(loop) => {
-          setState({ ...state, loop });
+          setState({ ...state, loop })
           paramSetter(state.id, loop)
-        }} 
-        currentLoop={state.loop} 
+        }}
+        currentLoop={state.loop === null ? undefined : Number(state.loop)}
       />
     </div>
   )
 }
 
-const LocationParmsSetter = 
-({helpText, paramSetter, currentState}: 
-{helpText: string, paramSetter: (x: number, y: number, loop: number) => void, currentState: { loop: number, x: number, y: number }}) => {
-  const [loop, setLoop] = useState(currentState.loop);
+const LocationParmsSetter = ({
+  helpText,
+  paramSetter,
+  currentState,
+}: {
+  helpText: string
+  paramSetter: (x: number | null, y: number | null, loop: number | null) => void
+  currentState: { loop: number | null; x: number | null; y: number | null }
+}) => {
+  const [loop, setLoop] = useState(currentState.loop)
 
   return (
     <div>
       <p style={{ fontSize: "14px", fontWeight: "500" }}>{helpText}</p>
-      <CoordsSetter 
-        coordsSetter={(x, y) => paramSetter(x, y, loop)} 
-        currentCoords={{ x: currentState.x, y: currentState.y }} 
+      <CoordsSetter
+        coordsSetter={(x, y) => paramSetter(x, y, loop)}
+        currentCoords={{ x: currentState.x, y: currentState.y }}
       />
-      <Loop 
-        loopSetter={(loop) => setLoop(loop)} 
-        currentLoop={loop}
-      />
+      <Loop loopSetter={(loop) => setLoop(loop)} currentLoop={loop} />
     </div>
   )
 }
 
-
-const CoordsSetter = 
-({ coordsSetter, currentCoords }: { coordsSetter: (x: number, y: number) => void, currentCoords: { x: number, y: number } }) => {
-  const [coords, setCoords] = useState<{x: number, y: number}>({
+const CoordsSetter = ({
+  coordsSetter,
+  currentCoords,
+}: {
+  coordsSetter: (x: number | null, y: number | null) => void
+  currentCoords: { x: number | null; y: number | null }
+}) => {
+  const [coords, setCoords] = useState<{ x: number | null; y: number | null }>({
     x: currentCoords.x,
-    y: currentCoords.y
+    y: currentCoords.y,
   })
-  
+
   return (
     <>
-      <div className='step-edit-input'>
-        <Field 
+      <div className="step-edit-input">
+        <Field
           label="X coord"
-          type='number'
-          kind='full'
-          size='small'
+          type="number"
+          kind="full"
+          size="small"
           placeholder="X"
-          value={coords.x || ""}
+          value={coords.x ?? ""}
           onChange={(e) => {
             setCoords({ ...coords, x: Number(e.target.value) })
             coordsSetter(Number(e.target.value), coords.y)
           }}
         />
       </div>
-      <div className='step-edit-input'>
-        <Field 
+      <div className="step-edit-input">
+        <Field
           label="Y coord"
-          type='number'
-          kind='full'
-          size='small'
+          type="number"
+          kind="full"
+          size="small"
           placeholder="Y"
-          value={coords.y || ""}
+          value={coords.y ?? ""}
           onChange={(e) => {
             setCoords({ ...coords, y: Number(e.target.value) })
             coordsSetter(coords.x, Number(e.target.value))
@@ -438,17 +484,22 @@ const CoordsSetter =
   )
 }
 
-
-const Loop = ({loopSetter, currentLoop}: {loopSetter: (loop: number) => void, currentLoop: number}) => {
+const Loop = ({
+  loopSetter,
+  currentLoop,
+}: {
+  loopSetter: (loop: number | null) => void
+  currentLoop?: number | null
+}) => {
   return (
-    <div className='step-edit-input'>
-      <Field 
+    <div className="step-edit-input">
+      <Field
         label="Repeat"
-        type='number'
+        type="number"
         placeholder="Repeat times"
-        kind='full'
-        size='small'
-        value={currentLoop || ""}
+        kind="full"
+        size="small"
+        value={currentLoop ?? ""}
         onChange={(e) => {
           loopSetter(Number(e.target.value))
         }}
@@ -457,61 +508,63 @@ const Loop = ({loopSetter, currentLoop}: {loopSetter: (loop: number) => void, cu
   )
 }
 
-
-const IDAndLocationSetter = 
-({helpText, label, paramSetter, currentState}:
-{
-  label: string, 
-  helpText: string, 
-  paramSetter: (id: string, x: number, y: number, loop: number) => void,
-  currentState: { id: string, x: number, y: number, loop: number }
+const IDAndLocationSetter = ({
+  helpText,
+  label,
+  paramSetter,
+  currentState,
+}: {
+  label: string
+  helpText: string
+  paramSetter: (id: string, x: number | null, y: number | null, loop: number | null) => void
+  currentState: { id: string; x: number | null; y: number | null; loop: number | null }
 }) => {
-  const [state, setState] = useState({  
+  const [state, setState] = useState({
     id: currentState?.id || "",
-    x: currentState?.x || 0,
-    y: currentState?.y || 0,
-    loop: currentState?.loop || 0
+    x: currentState?.x || null,
+    y: currentState?.y || null,
+    loop: currentState?.loop || null,
   })
 
   return (
     <div>
-      <p style={{ fontSize: "14px", fontWeight: "500"  }}>{helpText}</p>
-      <div className='step-edit-input'>
+      <p style={{ fontSize: "14px", fontWeight: "500" }}>{helpText}</p>
+      <div className="step-edit-input">
         <Field
           label={label}
           placeholder={label}
           value={state.id}
-          kind='full'
-          size='small'
+          kind="full"
+          size="small"
           onChange={(e) => {
-            setState({ ...state, id: e.target.value });
+            setState({ ...state, id: e.target.value })
             paramSetter(e.target.value, state.x, state.y, state.loop)
           }}
         />
       </div>
-      <CoordsSetter 
+      <CoordsSetter
         currentCoords={{ x: state.x, y: state.y }}
         coordsSetter={(x, y) => {
-          setState({...state, x, y});
+          setState({ ...state, x, y })
           paramSetter(state.id, x, y, state.loop)
-        }} 
+        }}
       />
-      <Loop 
+      <Loop
         loopSetter={(loop) => {
-          setState({...state, loop});
+          setState({ ...state, loop })
           paramSetter(state.id, state.x, state.y, loop)
         }}
-        currentLoop={state.loop} 
+        currentLoop={state.loop}
       />
     </div>
   )
 }
 
-function taskParametersAreValid<P extends {[key: string]: any}>(data: P) {
+function taskParametersAreValid<P extends { [key: string]: any }>(data: P) {
   if (data != undefined) {
-    const keys = Object.keys(data);
+    const keys = Object.keys(data)
     return keys.every((key) => Boolean(data[key]))
-  } 
+  }
 
   return false
 }
