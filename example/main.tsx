@@ -18,6 +18,7 @@ createRoot(document.getElementById("root")!).render(
           alert("Saved")
         },
         content: "Generate Quest",
+        validate: false,
       }}
     />
   </React.StrictMode>,

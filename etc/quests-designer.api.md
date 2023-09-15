@@ -20,7 +20,7 @@ export type QuestsDesignerProps = {
     maxConnnectionsPerStep?: number;
     saveDesignButton?: {
         content?: string;
-        onClick: (questDefinition: QuestDefinition, nodes: Node_2<StepNode>[], edges: Edge[]) => void;
+        onClick: (nodes: Node_2<StepNode>[], edges: Edge[], questDefinition?: QuestDefinition) => void;
         validate?: boolean;
     };
     closeDesigner?: () => void;
