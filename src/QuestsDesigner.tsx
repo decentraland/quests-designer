@@ -53,6 +53,7 @@ export type QuestsDesignerProps = {
   saveDesignButton?: {
     content?: string
     onClick: (questDefinition: QuestDefinition, nodes: Node<StepNode>[], edges: Edge[]) => void
+    validate?: boolean
   }
   /**
    * Optional function to show a close button that execute the given function
@@ -256,7 +257,7 @@ export const QuestsDesigner = ({
             />
           ) : (
             <Sidebar
-              isValidQuest={isValidQuest(nodes, edges)}
+              isValidQuest={saveDesignButton?.validate ? isValidQuest(nodes, edges) : true}
               generateButton={
                 saveDesignButton
                   ? { content: saveDesignButton.content || "Generate Quest Definition", onClick: triggerGenerateQuest }
