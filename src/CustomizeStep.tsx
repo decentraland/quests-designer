@@ -42,7 +42,7 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
         <div>
           <h1 style={{ fontSize: "22px" }}>Edit Step</h1>
         </div>
-        <CloseButton onClick={() => close()} />
+        <CloseButton onClick={() => onCancel()} />
       </div>
       <div style={{ margin: "5px 0" }} className="step-edit-input">
         <Field
