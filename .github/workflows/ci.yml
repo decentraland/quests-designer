@@ -11,6 +11,9 @@ name: CI
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@master
       - name: Use Node.js 18.x
