@@ -21,6 +21,7 @@ export type QuestsDesignerProps = {
     saveDesignButton?: {
         content?: string;
         onClick: (questDefinition: QuestDefinition, nodes: Node_2<StepNode>[], edges: Edge[]) => void;
+        validate?: boolean;
     };
     closeDesigner?: () => void;
     backButton?: () => void;
