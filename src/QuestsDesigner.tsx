@@ -101,9 +101,13 @@ export const QuestsDesigner = ({
   const [lastNodeId, setLastNodeId] = useState<string | null>(null)
   const [currentNodeIdTriggeringAnEdge, setCurrentNodeIdTriggeringAnEdge] = useState<string | null>(null)
 
-  const getId = () => {
-    const next = `Step-${globalId}`
-    setGlobalId(globalId + 1)
+  const getId = (id?: number): string => {
+    const next = id ? `Step-${id}` : `Step-${globalId}`
+    if (nodes.find((n) => n.id === next)) {
+      console.log("> Designer > Collision")
+      return getId(globalId + 1)
+    }
+    setGlobalId(id ? id + 1 : globalId + 1)
     setLastNodeId(next)
     return next
   }
