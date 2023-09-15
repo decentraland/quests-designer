@@ -107,7 +107,7 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
     connections: [],
   }
 
-  const filteredNodes = nodes.filter((node) => node.type != "start" && node.type != "end")
+  const filteredNodes = filterNodes(nodes)
 
   if (!filteredNodes.length) {
     throw new Error("Missing steps")
@@ -115,11 +115,18 @@ export const generateQuestDefinition = (nodes: Node<StepNode>[], edges: Edge<any
 
   questDefinition.steps = generateQuestSteps(filteredNodes)
 
-  const filteredEdges = edges.filter((edge) => edge.source != "_START_" && edge.target != "_END_")
+  // every node has edges
+  for (const node of filteredNodes) {
+    if (!edges.find((edge) => edge.source == node.id)) {
+      throw new Error("Missing Edge")
+    }
 
-  if (!filteredEdges.length) {
-    throw new Error("Missing connections between steps")
+    if (!edges.find((edge) => edge.target == node.id)) {
+      throw new Error("Missing Edge")
+    }
   }
+
+  const filteredEdges = edges.filter((edge) => edge.source != "_START_" && edge.target != "_END_")
 
   questDefinition.connections = generateQuestConnections(filteredNodes, filteredEdges)
 
@@ -295,6 +302,7 @@ export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
     generateQuestDefinition(nodes, edges)
     return true
   } catch (error) {
+    console.error("IsValidQuest error ", error)
     return false
   }
 }
@@ -318,11 +326,20 @@ export const isValidNode = (node: Node<StepNode>, nodes: Node<StepNode>[]) => {
 export const nodeIsUniqueStepID = (id: string, nodes: Node<StepNode>[]) =>
   nodes.filter((node) => node.data.id === id).length === 1
 
-export const stepTaskIsUniqueID = (id: string, nodes: Node<StepNode>[]) =>
-  nodes.every((node) => {
-    if (!node.data.tasks || !node.data.tasks.length) return true
-    return node.data.tasks.filter((t) => t.id == id).length === 1
-  })
+export const stepTaskIsUniqueID = (id: string, nodes: Node<StepNode>[]) => {
+  let count = 0
+  const newNodes = filterNodes(nodes)
+  for (const node of newNodes) {
+    if (!node.data.tasks || !node.data.tasks.length) continue
+    for (const task of node.data.tasks) {
+      if (task.id === id) {
+        count += 1
+      }
+    }
+  }
+
+  return count <= 1
+}
 
 export const stepTaskMustHaveDescription = (task: StepTask) => !!task.description.length
 
@@ -337,5 +354,8 @@ export const isValidStepTask = (stepTask: StepTask, nodes: Node<StepNode>[]): bo
     return false
   }
 
-  return nodes.every((node) => node.data.tasks.filter((t) => t.id == task.id).length === 1)
+  return stepTaskIsUniqueID(task.id, nodes)
 }
+
+export const filterNodes = (nodes: Node<StepNode>[]) =>
+  nodes.filter((node) => node.type != "start" && node.type != "end")

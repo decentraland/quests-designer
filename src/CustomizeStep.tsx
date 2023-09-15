@@ -20,16 +20,16 @@ import {
 
 type CustomizeStepProps = {
   step: StepNode
-  close: () => void
-  onSaveStep: () => void
+  onCancel: () => void
+  onDone: () => void
   onChangeStep: (s: StepNode) => void
 }
 
 export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
   step,
-  close,
-  onSaveStep,
+  onCancel,
   onChangeStep,
+  onDone,
 }) => {
   const [addTask, setAddTask] = useState(false)
   const [editTask, setEditTask] = useState<[StepTask, number] | null>(null)
@@ -74,8 +74,8 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
               description: event.target.value,
             })
           }}
-          error={nodeMustHaveDescription(step)}
-          message={nodeMustHaveDescription(step) ? "Must have a description" : undefined}
+          error={!nodeMustHaveDescription(step)}
+          message={!nodeMustHaveDescription(step) ? "Must have a description" : undefined}
         />
       </div>
       {step.tasks.length && !addTask && !editTask ? (
@@ -89,7 +89,7 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
                   inverted={isValid}
                   negative={!isValid}
                   content={task.id}
-                  onClick={() => setEditTask([task, i])}
+                  onClick={() => setEditTask([{ ...task }, i])}
                 />
                 <DeleteButton
                   onClick={() => {
@@ -104,25 +104,45 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
           })}
         </div>
       ) : null}
-      {!addTask && !editTask && <Button content="add task" size="small" onClick={() => setAddTask(true)} secondary />}
+      {!addTask && !editTask && (
+        <Button
+          content="add task"
+          size="small"
+          onClick={() => {
+            setAddTask(true)
+            onChangeStep({ ...step, tasks: [...step.tasks, { id: "", description: "", actionItems: [] }] })
+          }}
+          secondary
+        />
+      )}
       {addTask && (
         <Task
-          onNewTask={(task) => {
-            onChangeStep({ ...step, tasks: [...step.tasks, task] })
-            setAddTask(false)
+          task={step.tasks[step.tasks.length - 1]}
+          onChangeTask={(task) => {
+            const tasks = [...step.tasks]
+            tasks[tasks.length - 1] = task
+            onChangeStep({ ...step, tasks })
           }}
-          onCancel={() => setAddTask(false)}
+          onCancel={() => {
+            setAddTask(false)
+            onChangeStep({ ...step, tasks: step.tasks.slice(0, -1) })
+          }}
+          onDone={() => setAddTask(false)}
         />
       )}
       {editTask && (
         <Task
-          task={editTask[0]}
-          onNewTask={(task) => {
+          task={step.tasks[editTask[1]]}
+          onChangeTask={(task) => {
             const tasks = step.tasks.map((t, i) => (i == editTask[1] ? task : t))
             onChangeStep({ ...step, tasks })
-            setEditTask(null)
           }}
-          onCancel={() => setEditTask(null)}
+          onCancel={() => {
+            setEditTask(null)
+            const tasks = step.tasks.map((t, i) => (i == editTask[1] ? editTask[0] : t))
+            onChangeStep({ ...step, tasks })
+          }}
+          onDone={() => setEditTask(null)}
         />
       )}
       {!addTask && !editTask && (
@@ -130,13 +150,12 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
           <Button
             style={{ marginTop: "10px", marginRight: "5px" }}
             onClick={() => {
-              onSaveStep()
-              close()
+              onDone()
             }}
             content="Done"
             primary
           />
-          <Button style={{ marginTop: "10px" }} onClick={() => close()} content="Cancel" secondary />
+          <Button style={{ marginTop: "10px" }} onClick={() => onCancel()} content="Cancel" secondary />
         </div>
       )}
     </aside>
@@ -144,20 +163,16 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
 }
 
 const Task = ({
-  onNewTask,
+  onChangeTask,
   onCancel,
+  onDone,
   task,
 }: {
-  task?: StepTask
-  onNewTask: (t: StepTask) => void
+  task: StepTask
+  onChangeTask: (t: StepTask) => void
   onCancel: () => void
+  onDone: () => void
 }) => {
-  const [newTask, setNewTask] = useState<StepTask>({
-    id: task?.id || "",
-    description: task?.description || "",
-    actionItems: task?.actionItems || [],
-  })
-
   const [newAction, setNewAction] = useState(false)
   const [editAction, setEditAction] = useState<[StepTaskAction, number] | null>(null)
 
@@ -172,10 +187,12 @@ const Task = ({
           kind="full"
           size="small"
           placeholder="Task ID"
-          value={newTask.id}
-          onChange={(e) => setNewTask({ ...newTask, id: e.target.value })}
-          error={!stepTaskIsUniqueID(newTask.id, nodes)}
-          message={!stepTaskIsUniqueID(newTask.id, nodes) ? "The ID already exists" : undefined}
+          value={task.id}
+          onChange={(e) => onChangeTask({ ...task, id: e.target.value })}
+          error={!task.id ? false : !stepTaskIsUniqueID(task.id, nodes)}
+          message={
+            task.id == "" ? undefined : !stepTaskIsUniqueID(task.id, nodes) ? "The ID already exists" : undefined
+          }
         />
       </div>
       <div style={{ margin: "5px 0" }} className="step-edit-input">
@@ -184,18 +201,18 @@ const Task = ({
           kind="full"
           size="small"
           placeholder="Task Description"
-          value={newTask.description}
-          onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-          error={!stepTaskMustHaveDescription(newTask)}
-          message={!stepTaskMustHaveDescription(newTask) ? "Must have a description" : undefined}
+          value={task.description}
+          onChange={(e) => onChangeTask({ ...task, description: e.target.value })}
+          error={!stepTaskMustHaveDescription(task)}
+          message={!stepTaskMustHaveDescription(task) ? "Must have a description" : undefined}
         />
       </div>
       <div>
         <Header sub>Actions</Header>
-        {newTask.actionItems.length > 0 &&
+        {task.actionItems.length > 0 &&
           !newAction &&
           !editAction &&
-          newTask.actionItems.map((action, i) => (
+          task.actionItems.map((action, i) => (
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", marginTop: "10px" }}>
               <Button content={`${action.type}`} onClick={() => setEditAction([action, i])} inverted />
               <div style={{ display: "flex", alignContent: "center" }}>
@@ -206,7 +223,7 @@ const Task = ({
                 />
                 <DeleteButton
                   onClick={() => {
-                    setNewTask({ ...newTask, actionItems: newTask.actionItems.filter((_, index) => index != i) })
+                    onChangeTask({ ...task, actionItems: task.actionItems.filter((_, index) => index != i) })
                   }}
                 />
               </div>
@@ -215,7 +232,7 @@ const Task = ({
         {newAction && (
           <AddAction
             onAddAction={(action) => {
-              setNewTask({ ...newTask, actionItems: [...newTask.actionItems, action] })
+              onChangeTask({ ...task, actionItems: [...task.actionItems, action] })
               setNewAction(false)
             }}
             onCancel={() => setNewAction(false)}
@@ -225,9 +242,9 @@ const Task = ({
           <AddAction
             currentAction={editAction[0]}
             onAddAction={(action) => {
-              setNewTask({
-                ...newTask,
-                actionItems: newTask.actionItems.map((a, i) => (i == editAction[1] ? action : a)),
+              onChangeTask({
+                ...task,
+                actionItems: task.actionItems.map((a, i) => (i == editAction[1] ? action : a)),
               })
               setEditAction(null)
             }}
@@ -246,13 +263,7 @@ const Task = ({
       </div>
       {!newAction && !editAction && (
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
-          <Button
-            size="small"
-            content="Save Task"
-            onClick={() => onNewTask(newTask)}
-            primary
-            style={{ marginRight: "5px" }}
-          />
+          <Button size="small" content="Done" onClick={() => onDone()} primary style={{ marginRight: "5px" }} />
           <Button size="small" content="Cancel" onClick={() => onCancel()} />
         </div>
       )}

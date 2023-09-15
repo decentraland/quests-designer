@@ -230,8 +230,15 @@ export const QuestsDesigner = ({
           </div>
           {currentCustomizableStep ? (
             <CustomizeStep
-              step={currentCustomizableStep.data}
-              onSaveStep={() => {
+              step={nodes.find((n) => n.id == currentCustomizableStep.id)!.data}
+              onChangeStep={(step) => {
+                const node = { ...nodes.find((n) => n.id === currentCustomizableStep.id)! }
+                node.data = { ...step }
+                node.type = isValidNode(node, nodes) ? "questStep" : "questStepInvalid"
+
+                setNodes((nds) => nds.map((n) => (n.id == node.id ? node : n)))
+              }}
+              onCancel={() => {
                 setNodes((nds) =>
                   nds.map((n) =>
                     n.id == currentCustomizableStep.id
@@ -243,11 +250,9 @@ export const QuestsDesigner = ({
                       : n,
                   ),
                 )
+                setCurrentCustomizableStep(null)
               }}
-              onChangeStep={(step) => {
-                setCurrentCustomizableStep({ ...currentCustomizableStep, data: { ...step } })
-              }}
-              close={() => setCurrentCustomizableStep(null)}
+              onDone={() => setCurrentCustomizableStep(null)}
             />
           ) : (
             <Sidebar
