@@ -1,4 +1,10 @@
-import { createActionItems, createNewNode, generateQuestDefinition, isValidQuest } from "../src/utils"
+import {
+  createActionItems,
+  createNewNode,
+  generateNodesAndEdgesFromQuestDefinition,
+  generateQuestDefinition,
+  isValidQuest,
+} from "../src/utils"
 
 describe("utils functions", () => {
   describe("createActionItems()", () => {
@@ -11,6 +17,53 @@ describe("utils functions", () => {
     it("should be one action when loop is 0", () => {
       const actions = createActionItems({ type: "CUSTOM", parameters: { id: "EVENT" }, loop: 0 })
       expect(actions.length).toBe(1)
+    })
+  })
+
+  describe("generateNodesAndEdgesFromQuestDefinition()", () => {
+    it("shoulc create nodes properly", () => {
+      const { nodes } = generateNodesAndEdgesFromQuestDefinition({
+        steps: [
+          {
+            id: "step-1",
+            description: "desc",
+            tasks: [{ id: "task-1", description: "desc", actionItems: [{ type: "CUSTOM", parameters: { id: "C" } }] }],
+          },
+          {
+            id: "step-2",
+            description: "desc",
+            tasks: [
+              {
+                id: "task-2",
+                description: "desc",
+                actionItems: [
+                  { type: "CUSTOM", parameters: { id: "C" } },
+                  { type: "CUSTOM", parameters: { id: "C" } },
+                  { type: "CUSTOM", parameters: { id: "D" } },
+                ],
+              },
+            ],
+          },
+        ],
+        connections: [{ stepFrom: "step-1", stepTo: "step-2" }],
+      })
+
+      const step1Node = nodes.find((node) => node.id == "step-1")
+      expect(step1Node).not.toBeUndefined()
+      expect(step1Node?.data.tasks[0].actionItems.length).toBe(1)
+      expect(step1Node?.data.tasks[0].actionItems[0].loop).toBe(null)
+      expect(step1Node?.data.tasks[0].actionItems[0].type).toBe("CUSTOM")
+      expect(step1Node?.data.tasks[0].actionItems[0].parameters).toEqual({ id: "C" })
+
+      const step2Node = nodes.find((node) => node.id == "step-2")
+      expect(step2Node).not.toBeUndefined()
+      expect(step2Node?.data.tasks[0].actionItems.length).toBe(2)
+      expect(step2Node?.data.tasks[0].actionItems[0].loop).toBe(1)
+      expect(step2Node?.data.tasks[0].actionItems[0].type).toBe("CUSTOM")
+      expect(step2Node?.data.tasks[0].actionItems[0].parameters).toEqual({ id: "C" })
+      expect(step2Node?.data.tasks[0].actionItems[1].loop).toBe(null)
+      expect(step2Node?.data.tasks[0].actionItems[1].type).toBe("CUSTOM")
+      expect(step2Node?.data.tasks[0].actionItems[1].parameters).toEqual({ id: "D" })
     })
   })
 

@@ -31,12 +31,14 @@
   "dependencies": {
     "@dcl/quests-client": "^1.0.0",
     "decentraland-ui": "^4.10.0",
+    "deep-equal": "^2.2.2",
     "reactflow": "^11.7.4"
   },
   "devDependencies": {
     "@babel/core": "^7.22.19",
     "@dcl/eslint-config": "^1.1.12",
     "@microsoft/api-extractor": "^7.17.0",
+    "@types/deep-equal": "^1.0.1",
     "@types/jest": "^28.1.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",

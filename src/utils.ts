@@ -8,6 +8,7 @@ import {
   Task,
 } from "@dcl/quests-client/dist/protocol/decentraland/quests/definitions.gen"
 import { validateStepsAndConnections, validateTask } from "@dcl/quests-client/dist/utils"
+import deepEqual from "deep-equal"
 import { Edge, Node, XYPosition } from "reactflow"
 
 import { ActionType, Params, StepNode, StepTask, StepTaskAction } from "./types"
@@ -262,36 +263,37 @@ export const generateNodesAndEdgesFromQuestDefinition = (
 
 export const createStepTasks = (actions: Action[]): StepTaskAction[] => {
   const stepTasks: StepTaskAction[] = []
-  let currentTask: StepTaskAction | null = null
+  let lastTask: StepTaskAction | null = null
 
   for (const action of actions) {
-    if (currentTask === null || currentTask.type !== action.type) {
-      if (currentTask !== null) {
-        stepTasks.push(currentTask)
-      }
-      currentTask = {
+    if (lastTask === null) {
+      lastTask = {
         type: action.type as ActionType,
-        parameters: null,
+        parameters: action.parameters as Params<ActionType>,
+        loop: null,
+      }
+      continue
+    }
+
+    if (deepEqual({ type: lastTask.type, parameters: lastTask.parameters }, action)) {
+      if (lastTask.loop === null) {
+        lastTask.loop = 0
+      }
+      lastTask.loop++
+    } else {
+      if (lastTask !== null) {
+        stepTasks.push(lastTask)
+      }
+      lastTask = {
+        type: action.type as ActionType,
+        parameters: action.parameters as Params<ActionType>,
         loop: null,
       }
     }
-
-    if (currentTask.type == action.type) {
-      if (currentTask.loop === null) {
-        currentTask.loop = 0
-      }
-      currentTask.loop++
-    }
-
-    if (currentTask.parameters === undefined) {
-      currentTask.parameters = action.parameters as Params<ActionType>
-    } else if (currentTask.parameters && typeof action.parameters === "object") {
-      currentTask.parameters = { ...currentTask.parameters, ...action.parameters }
-    }
   }
 
-  if (currentTask !== null) {
-    stepTasks.push(currentTask)
+  if (lastTask !== null) {
+    stepTasks.push(lastTask)
   }
 
   return stepTasks
@@ -309,13 +311,18 @@ export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
 
 export const isValidNode = (node: Node<StepNode>, nodes: Node<StepNode>[]) => {
   if (!nodeIsUniqueStepID(node.data.id, nodes) || !nodeMustHaveDescription(node.data)) {
+    console.log("Not unique or missing description")
     return false
   }
 
-  if (!node.data.tasks.length) return false
+  if (!node.data.tasks.length) {
+    console.log("Invalid tasksss")
+    return false
+  }
 
   for (const task of node.data.tasks) {
     if (!isValidStepTask(task, nodes)) {
+      console.log("Invalid Task: ", task)
       return false
     }
   }
