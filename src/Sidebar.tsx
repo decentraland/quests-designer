@@ -43,7 +43,12 @@ export default ({
               .map((node) => (
                 <p className="step" key={node.data.id}>
                   {node.data.id} -{" "}
-                  <span style={{ color: isValidNode(node, nodes) ? "#36D41D" : "#FF0000" }}>
+                  <span
+                    style={{
+                      color: !isValidNode(node, nodes) ? "#FF0000" : "",
+                      fontWeight: isValidNode(node, nodes) ? "normal" : "600",
+                    }}
+                  >
                     {isValidNode(node, nodes) ? "Valid" : "Invalid"}
                   </span>
                 </p>
