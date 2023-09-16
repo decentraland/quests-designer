@@ -25,8 +25,8 @@ const CopySvg = () => {
       <path
         d="M13.7992 14.44V14.44C14.8545 14.44 15.7101 13.5845 15.7101 12.5291V5.32004C15.7101 4.06083 14.6893 3.04004 13.4301 3.04004H7.00965C6.16362 3.04004 5.47778 3.72588 5.47778 4.57191V4.57191"
         stroke="#161518"
-        stroke-width="0.76"
-        stroke-linejoin="round"
+        strokeWidth="0.76"
+        strokeLinejoin="round"
       />
       <rect
         x="3.80005"
@@ -35,8 +35,8 @@ const CopySvg = () => {
         height="11.4"
         rx="1.52"
         stroke="#161518"
-        stroke-width="1.52"
-        stroke-linejoin="round"
+        strokeWidth="1.52"
+        strokeLinejoin="round"
       />
     </svg>
   )
