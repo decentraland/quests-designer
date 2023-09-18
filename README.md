@@ -69,7 +69,7 @@ createRoot(document.getElementById("root")!).render(
 )
 ```
 
-## Example
+## Example
 
 You can see an example of the package in action by running:
 
