@@ -84,7 +84,10 @@ export const CustomizeStep: React.FunctionComponent<CustomizeStepProps> = ({
           {step.tasks.map((task, i) => {
             const isValid = isValidStepTask(task, nodes)
             return (
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
+              <div
+                key={`${task.id}${i}`}
+                style={{ display: "flex", justifyContent: "space-between", marginTop: "10px" }}
+              >
                 <Button
                   inverted={isValid}
                   negative={!isValid}
@@ -213,7 +216,10 @@ const Task = ({
           !newAction &&
           !editAction &&
           task.actionItems.map((action, i) => (
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", marginTop: "10px" }}>
+            <div
+              key={`${action.type}${i}`}
+              style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", marginTop: "10px" }}
+            >
               <Button content={`${action.type}`} onClick={() => setEditAction([action, i])} inverted />
               <div style={{ display: "flex", alignContent: "center" }}>
                 <CopyButton
