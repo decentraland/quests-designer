@@ -104,7 +104,6 @@ export const QuestsDesigner = ({
   const getId = (id?: number): string => {
     const next = id ? `Step-${id}` : `Step-${globalId}`
     if (nodes.find((n) => n.id === next)) {
-      console.log("> Designer > Collision")
       return getId(globalId + 1)
     }
     setGlobalId(id ? id + 1 : globalId + 1)

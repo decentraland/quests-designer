@@ -304,25 +304,26 @@ export const isValidQuest = (nodes: Node<StepNode>[], edges: Edge[]) => {
     generateQuestDefinition(nodes, edges)
     return true
   } catch (error) {
-    console.error("IsValidQuest error ", error)
+    console.error("> Invalid Quest > ", error)
     return false
   }
 }
 
 export const isValidNode = (node: Node<StepNode>, nodes: Node<StepNode>[]) => {
-  if (!nodeIsUniqueStepID(node.data.id, nodes) || !nodeMustHaveDescription(node.data)) {
-    console.log("Not unique or missing description")
+  if (!nodeIsUniqueStepID(node.data.id, nodes)) {
+    return false
+  }
+
+  if (!nodeMustHaveDescription(node.data)) {
     return false
   }
 
   if (!node.data.tasks.length) {
-    console.log("Invalid tasksss")
     return false
   }
 
   for (const task of node.data.tasks) {
     if (!isValidStepTask(task, nodes)) {
-      console.log("Invalid Task: ", task)
       return false
     }
   }
@@ -358,6 +359,7 @@ export const isValidStepTask = (stepTask: StepTask, nodes: Node<StepNode>[]): bo
   try {
     validateTask(task)
   } catch (error) {
+    console.error("> Error validating task > ", error)
     return false
   }
 
