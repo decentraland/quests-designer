@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/decentraland/quests-designer#readme",
   "dependencies": {
-    "@dcl/quests-client": "^1.0.2",
+    "@dcl/quests-client": "^1.0.3",
     "decentraland-ui": "^4.10.0",
     "deep-equal": "^2.2.2",
     "reactflow": "^11.7.4"
