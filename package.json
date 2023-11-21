@@ -39,7 +39,7 @@
     "@dcl/eslint-config": "^1.1.12",
     "@microsoft/api-extractor": "^7.17.0",
     "@types/deep-equal": "^1.0.1",
-    "@types/jest": "^28.1.0",
+    "@types/jest": "^29.5.9",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
