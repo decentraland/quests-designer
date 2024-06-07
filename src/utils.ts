@@ -165,12 +165,6 @@ export const generateNodesAndEdgesFromQuestDefinition = (
     nodes.push(stepNode)
   }
 
-  if (connections.length === 0) {
-    throw new Error("QuestDefinition does not have any connections between steps.")
-  }
-
-  const iWithoutTo = 0
-
   // Create edges from connections
   for (const connection of connections) {
     const { stepFrom, stepTo } = connection
@@ -194,7 +188,7 @@ export const generateNodesAndEdgesFromQuestDefinition = (
 
     if (connections.every((connection) => connection.stepFrom != stepTo)) {
       const edge: Edge<any> = {
-        id: iWithoutTo > 0 ? "_END_" : `reactflow__edge-${stepTo}-_END_`,
+        id: `reactflow__edge-${stepTo}-_END_`,
         source: stepTo,
         target: "_END_",
       }
@@ -207,6 +201,22 @@ export const generateNodesAndEdgesFromQuestDefinition = (
       target: stepTo,
     }
     edges.push(edge)
+  }
+
+  if (connections.length === 0 && steps.length === 1) {
+    const step = steps[0]
+    const startEdge: Edge<any> = {
+      id: step.id,
+      source: "_START_",
+      target: step.id,
+    }
+    const endEge: Edge<any> = {
+      id: `reactflow__edge-${step.id}-_END_`,
+      source: step.id,
+      target: "_END_",
+    }
+    edges.push(startEdge)
+    edges.push(endEge)
   }
 
   if (nodePositions) {
