@@ -165,58 +165,61 @@ export const generateNodesAndEdgesFromQuestDefinition = (
     nodes.push(stepNode)
   }
 
-  // Create edges from connections
-  for (const connection of connections) {
-    const { stepFrom, stepTo } = connection
-    if (!stepFrom || !stepTo) {
-      throw new Error("Invalid connection data.")
-    }
-
-    let id = stepTo
-    if (edges.find((e) => e.id == id)) {
-      id = `reactflow__edge-${stepFrom}-${stepTo}`
-    }
-
-    if (connections.every((connection) => connection.stepTo != stepFrom)) {
-      const edge: Edge<any> = {
-        id: stepFrom,
+  if (connections.length === 0) {
+    // if connections length is 0 means that the quest is single step
+    // or the quest has multiple starting points working as "single-step"
+    for (const step of steps) {
+      const startEdge: Edge<any> = {
+        id: step.id,
         source: "_START_",
-        target: stepFrom,
+        target: step.id,
       }
-      edges.push(edge)
-    }
-
-    if (connections.every((connection) => connection.stepFrom != stepTo)) {
-      const edge: Edge<any> = {
-        id: `reactflow__edge-${stepTo}-_END_`,
-        source: stepTo,
+      const endEge: Edge<any> = {
+        id: `reactflow__edge-${step.id}-_END_`,
+        source: step.id,
         target: "_END_",
       }
+      edges.push(startEdge)
+      edges.push(endEge)
+    }
+  } else {
+    // Create edges from connections
+    for (const connection of connections) {
+      const { stepFrom, stepTo } = connection
+      if (!stepFrom || !stepTo) {
+        throw new Error("Invalid connection data.")
+      }
+
+      let id = stepTo
+      if (edges.find((e) => e.id == id)) {
+        id = `reactflow__edge-${stepFrom}-${stepTo}`
+      }
+
+      if (connections.every((connection) => connection.stepTo != stepFrom)) {
+        const edge: Edge<any> = {
+          id: stepFrom,
+          source: "_START_",
+          target: stepFrom,
+        }
+        edges.push(edge)
+      }
+
+      if (connections.every((connection) => connection.stepFrom != stepTo)) {
+        const edge: Edge<any> = {
+          id: `reactflow__edge-${stepTo}-_END_`,
+          source: stepTo,
+          target: "_END_",
+        }
+        edges.push(edge)
+      }
+
+      const edge: Edge<any> = {
+        id,
+        source: stepFrom,
+        target: stepTo,
+      }
       edges.push(edge)
     }
-
-    const edge: Edge<any> = {
-      id,
-      source: stepFrom,
-      target: stepTo,
-    }
-    edges.push(edge)
-  }
-
-  if (connections.length === 0 && steps.length === 1) {
-    const step = steps[0]
-    const startEdge: Edge<any> = {
-      id: step.id,
-      source: "_START_",
-      target: step.id,
-    }
-    const endEge: Edge<any> = {
-      id: `reactflow__edge-${step.id}-_END_`,
-      source: step.id,
-      target: "_END_",
-    }
-    edges.push(startEdge)
-    edges.push(endEge)
   }
 
   if (nodePositions) {
